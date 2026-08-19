@@ -1,0 +1,17 @@
+html{
+    scroll-behavior: smooth;
+}
+.menu-fixed {
+    position: sticky;
+    top: 20px;
+}
+
+input{
+    width:250px;
+    height:35px;
+    border:none;
+    border-radius:8px;
+    padding:0 10px;
+    background:white;
+    outline:none;
+}
