@@ -39,12 +39,6 @@ export default function Menu({ categories = [] }) {
             Ser Go&apos;sht haqida
           </NavLink>
         </li>
-
-        <li>
-          <NavLink to="/Basket" className={getLinkClass}>
-            Savat
-          </NavLink>
-        </li>
       </ul>
 
       <p className="menu-label menu-label-space">MENU</p>
