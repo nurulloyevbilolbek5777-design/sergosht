@@ -52,7 +52,7 @@ export default function ProductList({ products, slug, title }) {
         <div className="block">
           <h2 className="title">{title}</h2>
 
-          <div className="columns is-multiline">
+          <div className="product-grid">
             {products.map((product) => (
               <Product
                 key={product.id}
@@ -75,121 +75,61 @@ export default function ProductList({ products, slug, title }) {
         />
 
         {activeProduct && (
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "20px",
-              maxWidth: "1100px",
-              width: "100%",
-              margin: "auto",
-              padding: "40px",
-              position: "relative",
-              display: "flex",
-              gap: "40px",
-            }}
-          >
+          <div className="product-modal-content">
             <button
               onClick={() => setIsModalOpen(false)}
-              style={{
-                position: "absolute",
-                top: "20px",
-                right: "20px",
-                border: "none",
-                background: "#f2f2f2",
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                cursor: "pointer",
-                fontSize: "20px",
-              }}
+              className="product-modal-close"
             >
               ×
             </button>
 
-            <div style={{ flex: 1.2 }}>
+            <div className="product-modal-image">
               <img
                 src={"https://rest.sergosht-api.uz" + activeProduct.image}
                 alt={activeProduct.title}
-                style={{
-                  width: "100%",
-                  borderRadius: "16px",
-                  objectFit: "contain",
-                }}
+                loading="lazy"
               />
             </div>
 
-            <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: "28px", fontWeight: "700" }}>
+            <div className="product-modal-info">
+              <h2 className="product-modal-title">
                 {activeProduct.title}
               </h2>
 
-              <p style={{ fontSize: "18px", marginTop: "10px" }}>
-                {activeProduct.price} UZS
+              <p className="product-modal-price">
+                {activeProduct.price} сум
               </p>
               
-              <p style={{ color: "#777", marginTop: "10px" }}>
+              <p className="product-modal-description">
                 {activeProduct.description}
               </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "14px",
-                  marginTop: "30px",
-                }}
-              >
-                <button
-                  onClick={() =>
-                    setCount((prev) => Math.max(1, prev - 1))
-                  }
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: "#f2f2f2",
-                    fontSize: "18px",
-                    cursor: "pointer",
-                  }}
-                >
-                  −
-                </button>
+              <div className="product-modal-actions">
+                <div className="product-modal-counter">
+                  <button
+                    onClick={() =>
+                      setCount((prev) => Math.max(1, prev - 1))
+                    }
+                  >
+                    −
+                  </button>
 
-                <span style={{ fontSize: "18px" }}>{count}</span>
+                  <span>{count}</span>
+
+                  <button
+                    onClick={() => setCount((prev) => prev + 1)}
+                  >
+                    +
+                  </button>
+                </div>
 
                 <button
-                  onClick={() => setCount((prev) => prev + 1)}
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: "#f2f2f2",
-                    fontSize: "18px",
-                    cursor: "pointer",
-                  }}
+                  onClick={addToCart}
+                  className="product-modal-add-btn"
                 >
-                  +
+                  В корзину: {activeProduct.price * count} сум
                 </button>
               </div>
-
-              <button
-                onClick={addToCart}
-                style={{
-                  marginTop: "30px",
-                  width: "100%",
-                  background: "#111",
-                  color: "#fff",
-                  border: "none",
-                  padding: "16px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  cursor: "pointer",
-                }}
-              >
-                В корзину : {activeProduct.price * count} UZS
-              </button>
             </div>
           </div>
         )}
