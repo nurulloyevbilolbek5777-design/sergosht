@@ -34,13 +34,25 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     if (!localStorage.getItem("cart")) {
       localStorage.setItem("cart", "[]");
     }
 
-    setUser(getUserFromStorage());
+    const savedUser = getUserFromStorage();
+    setUser(savedUser);
+
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const total = cart.reduce((sum, item) => sum + (item.count || 1), 0);
+      setCartCount(total);
+    };
+
+    updateCartCount();
+    window.addEventListener("storage", updateCartCount);
+    return () => window.removeEventListener("storage", updateCartCount);
   }, []);
 
   function changeForm(name, value) {
@@ -229,6 +241,54 @@ export default function Navbar() {
 
         <div className={`navbar-menu ${isMenuOpen ? "is-active" : ""}`}>
           <div className="navbar-end">
+            <div className="navbar-item">
+  <button
+      onClick={() => {
+        document.body.classList.toggle('dark-theme');
+        localStorage.setItem('darkTheme', document.body.classList.contains('dark-theme'));
+      }}
+      style={{
+        background: 'none',
+        border: 'none',
+        fontSize: '24px',
+        cursor: 'pointer',
+        marginRight: '10px',
+        padding: '8px',
+        borderRadius: '50%',
+        transition: 'background 0.3s',
+      }}
+      className="theme-toggle"
+    >
+      🌙
+    </button>
+  </div>
+  <div className="navbar-item">
+    <NavLink to="/Basket" className="button is-danger is-light" style={{
+      position: "relative",
+      marginRight: "10px"
+    }}>
+                🛒 Корзина
+                {cartCount > 0 && (
+                  <span style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    background: "#fff",
+                    color: "#C81E1E",
+                    borderRadius: "50%",
+                    width: "24px",
+                    height: "24px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    {cartCount}
+                  </span>
+                )}
+              </NavLink>
+            </div>
             <div className="navbar-item">
               {user ? (
                 <button
