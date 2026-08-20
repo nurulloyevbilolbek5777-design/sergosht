@@ -3,10 +3,13 @@
 :root {
   --ink: #1b1512;
   --ink-soft: #2a211c;
+
   --cream: #f8f3ea;
   --cream-deep: #efe6d6;
+
   --ember: #c81e1e;
   --ember-bright: #e63b2e;
+
   --gold: #c89b3c;
   --gold-soft: #e9d9ae;
 
@@ -27,9 +30,6 @@
     0 24px 48px -16px rgba(27, 21, 18, 0.28);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  --nav-h: 76px;
-  --bottom-bar-h: 72px;
 }
 
 * {
@@ -49,7 +49,6 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background 0.25s ease, color 0.25s ease;
 }
 
 button,
@@ -77,9 +76,9 @@ img {
   border-radius: 5px;
 }
 
-/* =========================================================
+/* ---------------------------------------------------------
    Заголовки
-   ========================================================= */
+   --------------------------------------------------------- */
 
 .title {
   color: var(--ink) !important;
@@ -90,7 +89,7 @@ img {
 
 h1.title {
   position: relative;
-  margin-bottom: 32px !important;
+  margin-bottom: 30px !important;
   padding-bottom: 14px;
   font-size: clamp(28px, 4vw, 42px) !important;
 }
@@ -102,7 +101,11 @@ h1.title::after {
   width: 56px;
   height: 3px;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--ember), var(--gold));
+  background: linear-gradient(
+    90deg,
+    var(--ember),
+    var(--gold)
+  );
   content: "";
 }
 
@@ -111,90 +114,36 @@ h1.title::after {
   font-family: var(--font-body) !important;
 }
 
-/* =========================================================
-   Навигация
-   ========================================================= */
+/* ---------------------------------------------------------
+   Кнопки Bulma
+   --------------------------------------------------------- */
 
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  min-height: var(--nav-h);
-  background: linear-gradient(180deg, #d41313 0%, var(--ember) 100%) !important;
-  box-shadow: 0 8px 24px -12px rgba(200, 30, 30, 0.55);
-}
-
-.navbar-brand {
-  align-items: center;
-}
-
-.navbar-brand .navbar-item img {
-  max-height: 46px;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
-  transition: transform 0.35s var(--ease-out);
-}
-
-.navbar-brand .navbar-item:hover img {
-  transform: scale(1.04);
-}
-
-.navbar-menu {
-  display: flex !important;
-  flex-grow: 1;
-  align-items: center;
-}
-
-.navbar-end {
-  align-items: center;
-}
-
-.navbar .button {
-  min-height: 42px;
-  border-radius: 999px !important;
+.button {
   font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 700 !important;
-  letter-spacing: 0.01em;
-  transition:
-    transform 0.2s var(--ease-out),
-    box-shadow 0.2s var(--ease-out);
 }
-
-.navbar .button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 16px -6px rgba(0, 0, 0, 0.28);
-}
-
-.navbar-burger {
-  display: none;
-  margin-left: auto;
-  border: 0;
-  background: transparent;
-  color: #ffffff;
-  cursor: pointer;
-}
-
-/* =========================================================
-   Кнопки
-   ========================================================= */
 
 .button.is-danger {
   border: none !important;
   border-radius: var(--radius-s) !important;
-  background: linear-gradient(135deg, var(--ember-bright), var(--ember)) !important;
+  background: linear-gradient(
+    135deg,
+    var(--ember-bright),
+    var(--ember)
+  ) !important;
   box-shadow: 0 6px 16px -6px rgba(200, 30, 30, 0.55);
   font-weight: 700;
 }
 
 .button.is-danger:hover {
-  filter: brightness(1.06);
   box-shadow: 0 10px 22px -8px rgba(200, 30, 30, 0.6);
+  filter: brightness(1.06);
 }
 
 .button.is-success {
   border: none !important;
   border-radius: var(--radius-s) !important;
   background: var(--ink) !important;
+  color: #fff !important;
   font-weight: 700;
 }
 
@@ -208,17 +157,14 @@ h1.title::after {
   font-weight: 600;
 }
 
-/* =========================================================
-   Боковое меню
-   ========================================================= */
+/* ---------------------------------------------------------
+   Левое меню
+   --------------------------------------------------------- */
 
 .menu-fixed {
-  position: sticky;
-  top: calc(var(--nav-h) + 20px);
-  overflow: hidden;
   border: 1px solid var(--cream-deep);
   border-radius: var(--radius-m);
-  background: #ffffff;
+  background: #fff;
   box-shadow: var(--shadow-card);
   padding: 14px;
 }
@@ -261,68 +207,16 @@ h1.title::after {
   padding-left: 16px;
 }
 
-/* =========================================================
-   Слайдер акций
-   ========================================================= */
-
-.main-swiper,
-.swiper {
-  overflow: hidden;
-  margin-bottom: 40px;
-  border-radius: var(--radius-l);
-  box-shadow: var(--shadow-lift);
-}
-
-.promo-slide-button {
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.promo-slide-button img {
-  width: 100%;
-  aspect-ratio: 16 / 6;
-  object-fit: cover;
-  transition: transform 0.4s var(--ease-out);
-}
-
-.promo-slide-button:hover img {
-  transform: scale(1.02);
-}
-
-.swiper-button-next,
-.swiper-button-prev {
-  display: grid !important;
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 50%;
-  background: rgba(27, 21, 18, 0.42);
-  color: #ffffff !important;
-  place-items: center;
-  backdrop-filter: blur(4px);
-  transition: background 0.2s ease;
-}
-
-.swiper-button-next:hover,
-.swiper-button-prev:hover {
-  background: var(--ember);
-}
-
-.swiper-button-next::after,
-.swiper-button-prev::after {
-  font-size: 16px !important;
-  font-weight: 900;
-}
-
-/* =========================================================
+/* ---------------------------------------------------------
    Товары
-   ========================================================= */
+   --------------------------------------------------------- */
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(245px, 1fr)
+  );
   gap: 24px;
   margin-top: 20px;
 }
@@ -332,7 +226,7 @@ h1.title::after {
   overflow: hidden;
   border: 1px solid var(--cream-deep);
   border-radius: var(--radius-m);
-  background: #ffffff;
+  background: #fff;
   box-shadow: var(--shadow-card);
   cursor: pointer;
   transition:
@@ -342,9 +236,9 @@ h1.title::after {
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
   border-color: transparent;
   box-shadow: var(--shadow-lift);
+  transform: translateY(-5px);
 }
 
 .product-card-image {
@@ -411,7 +305,7 @@ h1.title::after {
   border-radius: 50%;
   background: var(--ink);
   box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.6);
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   font-size: 26px;
   line-height: 1;
@@ -435,27 +329,20 @@ h1.title::after {
   transform: scale(1.08) rotate(90deg);
 }
 
-/* =========================================================
-   Карточки Bulma, формы и модалки
-   ========================================================= */
+/* ---------------------------------------------------------
+   Bulma карточки
+   --------------------------------------------------------- */
 
 .card,
 .box {
   border: 1px solid var(--cream-deep);
   border-radius: var(--radius-m) !important;
-  background: #ffffff;
+  background: #fff;
   box-shadow: var(--shadow-card);
 }
 
 .card {
   overflow: hidden;
-  transition:
-    transform 0.3s var(--ease-out),
-    box-shadow 0.3s var(--ease-out);
-}
-
-.card:hover {
-  box-shadow: var(--shadow-lift);
 }
 
 .card-image figure.image img {
@@ -465,6 +352,82 @@ h1.title::after {
 .card:hover .card-image figure.image img {
   transform: scale(1.04);
 }
+
+/* ---------------------------------------------------------
+   Формы
+   --------------------------------------------------------- */
+
+.label {
+  color: #8a7c6e !important;
+  font-size: 13px;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.input,
+.textarea {
+  height: auto !important;
+  border: 1.5px solid var(--cream-deep) !important;
+  border-radius: var(--radius-s) !important;
+  background: var(--cream) !important;
+  padding: 12px 14px !important;
+  color: var(--ink) !important;
+  font-size: 16px;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--ember) !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 4px rgba(200, 30, 30, 0.1) !important;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #a49383;
+}
+
+/* ---------------------------------------------------------
+   Уведомления
+   --------------------------------------------------------- */
+
+.notification {
+  border-radius: var(--radius-s) !important;
+  border: none !important;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.notification.is-success {
+  background: #e9f5e8 !important;
+  color: #276b33 !important;
+}
+
+.notification.is-danger {
+  background: #fbeaea !important;
+  color: var(--ember) !important;
+}
+
+.notification.is-light {
+  border: 1px dashed var(--cream-deep) !important;
+  background: var(--cream) !important;
+  color: #8a7c6e !important;
+}
+
+.has-text-primary,
+.has-text-link {
+  color: var(--ember) !important;
+}
+
+.has-text-success {
+  color: #2e8b4e !important;
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------
+   Modals Bulma
+   --------------------------------------------------------- */
 
 .modal {
   z-index: 250;
@@ -480,19 +443,6 @@ h1.title::after {
   overflow: hidden;
   border-radius: var(--radius-l) !important;
   box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.5);
-  animation: sheet-in 0.35s var(--ease-out);
-}
-
-@keyframes sheet-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .modal-card-head {
@@ -502,13 +452,15 @@ h1.title::after {
 }
 
 .modal-card-title {
+  color: var(--ink);
   font-family: var(--font-display) !important;
   font-size: 20px !important;
   font-weight: 600 !important;
 }
 
 .modal-card-body {
-  background: #ffffff;
+  background: #fff;
+  color: var(--ink);
   padding: 24px !important;
 }
 
@@ -518,56 +470,22 @@ h1.title::after {
   padding: 18px 24px !important;
 }
 
-.promo-modal-content {
-  max-width: 900px !important;
+/* ---------------------------------------------------------
+   Breadcrumb и Toast
+   --------------------------------------------------------- */
+
+.breadcrumb a {
+  color: #8a7c6e;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.promo-modal-card {
-  overflow: hidden;
-  background: #ffffff;
+.breadcrumb li.is-active a {
+  color: var(--ink);
 }
 
-.promo-modal-body {
-  padding: 24px;
-}
-
-.input,
-.textarea {
-  height: auto !important;
-  border: 1.5px solid var(--cream-deep) !important;
-  border-radius: var(--radius-s) !important;
-  background: var(--cream) !important;
-  padding: 12px 14px !important;
-  font-size: 16px;
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.input:focus,
-.textarea:focus {
-  border-color: var(--ember) !important;
-  background: #ffffff !important;
-  box-shadow: 0 0 0 4px rgba(200, 30, 30, 0.1) !important;
-}
-
-.label {
-  color: #8a7c6e !important;
-  font-size: 13px;
-  font-weight: 700 !important;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.has-text-primary,
-.has-text-link {
-  color: var(--ember) !important;
-}
-
-.has-text-success {
-  color: #2e8b4e !important;
-  font-weight: 700;
+.breadcrumb ul {
+  border-bottom: none;
 }
 
 .Toastify__toast {
@@ -576,74 +494,58 @@ h1.title::after {
   font-weight: 600;
 }
 
-/* =========================================================
-   Кнопка вверх
-   ========================================================= */
-
-.scroll-to-top {
-  position: fixed;
-  right: 24px;
-  bottom: 28px;
-  z-index: 180;
-  display: grid;
-  width: 48px;
-  height: 48px;
-  border: 0;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--ember-bright), var(--ember));
-  box-shadow: 0 10px 24px -8px rgba(200, 30, 30, 0.6);
-  color: #ffffff;
-  cursor: pointer;
-  font-size: 26px;
-  font-weight: 700;
-  opacity: 0;
-  pointer-events: none;
-  place-items: center;
-  transform: translateY(14px);
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s var(--ease-out);
-}
-
-.scroll-to-top.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-.scroll-to-top:hover {
-  transform: translateY(-3px);
-}
-
-/* =========================================================
-   Тёмная тема — исправленная, без белых блоков
-   ========================================================= */
+/* ---------------------------------------------------------
+   Тёмная тема
+   --------------------------------------------------------- */
 
 body.dark-theme {
   --ink: #f6eee4;
   --ink-soft: #2a211c;
   --cream: #17110f;
   --cream-deep: #3b2c25;
+
   background: #17110f;
   color: #f6eee4;
-}
-
-body.dark-theme .navbar {
-  background: linear-gradient(180deg, #421a17 0%, #26110f 100%) !important;
-  box-shadow: 0 8px 26px -12px rgba(0, 0, 0, 0.8);
 }
 
 body.dark-theme .menu-fixed,
 body.dark-theme .card,
 body.dark-theme .box,
-body.dark-theme .product-card,
 body.dark-theme .modal-card,
-body.dark-theme .promo-modal-card,
-body.dark-theme .modal-card-body,
-body.dark-theme .promo-modal-body {
+body.dark-theme .modal-content,
+body.dark-theme .modal-card-body {
   border-color: #423129 !important;
   background: #251b17 !important;
   color: #f6eee4 !important;
+}
+
+body.dark-theme .modal-card-head,
+body.dark-theme .modal-card-foot {
+  border-color: #423129 !important;
+  background: #30231d !important;
+  color: #f8f3ea !important;
+}
+
+body.dark-theme .title,
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme .modal-card-title,
+body.dark-theme .product-card-title {
+  color: #f8f3ea !important;
+}
+
+body.dark-theme .subtitle,
+body.dark-theme .has-text-grey,
+body.dark-theme .content,
+body.dark-theme .product-card-description {
+  color: #c7b9aa !important;
+}
+
+body.dark-theme .product-card,
+body.dark-theme .product-card-image {
+  border-color: #423129;
+  background: #251b17;
 }
 
 body.dark-theme .menu-label {
@@ -658,38 +560,7 @@ body.dark-theme .menu-list a {
 body.dark-theme .menu-list a:hover,
 body.dark-theme .menu-list a.active {
   background: rgba(200, 30, 30, 0.25) !important;
-  color: #ffffff !important;
-}
-
-body.dark-theme .title,
-body.dark-theme h1,
-body.dark-theme h2,
-body.dark-theme h3,
-body.dark-theme .product-card-title {
-  color: #f8f3ea !important;
-}
-
-body.dark-theme .subtitle,
-body.dark-theme .product-card-description,
-body.dark-theme .has-text-grey,
-body.dark-theme .content,
-body.dark-theme .promo-modal-body .content {
-  color: #c7b9aa !important;
-}
-
-body.dark-theme .product-card-price {
-  color: #ff6258 !important;
-}
-
-body.dark-theme .product-card-image {
-  background: #342620;
-}
-
-body.dark-theme .modal-card-head,
-body.dark-theme .modal-card-foot {
-  border-color: #423129 !important;
-  background: #30231d !important;
-  color: #f8f3ea !important;
+  color: #fff !important;
 }
 
 body.dark-theme .input,
@@ -699,45 +570,29 @@ body.dark-theme .textarea {
   color: #f8f3ea !important;
 }
 
-body.dark-theme .input::placeholder,
-body.dark-theme .textarea::placeholder {
-  color: #a99888 !important;
-}
-
 body.dark-theme .input:focus,
 body.dark-theme .textarea:focus {
   border-color: var(--ember-bright) !important;
   background: #3d2d25 !important;
 }
 
-body.dark-theme .button:not(.is-danger):not(.is-success) {
-  border-color: #594137 !important;
-  background: #342620 !important;
-  color: #f8f3ea !important;
-}
+/* ---------------------------------------------------------
+   Mobile
+   --------------------------------------------------------- */
 
-body.dark-theme .modal-background {
-  background: rgba(10, 7, 6, 0.82) !important;
-}
-
-/* =========================================================
-   Мобильная версия
-   ========================================================= */
-
-@media (max-width: 1024px) {
+@media screen and (max-width: 1024px) {
   .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(220px, 1fr)
+    );
     gap: 18px;
   }
 }
 
-@media (max-width: 768px) {
-  :root {
-    --nav-h: 60px;
-  }
-
+@media screen and (max-width: 768px) {
   body {
-    padding-bottom: var(--bottom-bar-h);
+    padding-bottom: 76px;
   }
 
   .container {
@@ -745,64 +600,12 @@ body.dark-theme .modal-background {
     padding-left: 14px;
   }
 
-  h1.title {
-    margin-bottom: 22px !important;
-    font-size: 26px !important;
-  }
-
-  .navbar {
-    min-height: var(--nav-h);
-  }
-
-  .navbar-brand .navbar-item img {
-    max-height: 34px;
-  }
-
-  .navbar-burger {
-    display: flex;
-  }
-
-  .navbar-menu {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    display: flex !important;
-    min-height: var(--bottom-bar-h);
-    border-top: 1px solid var(--cream-deep);
-    background: #ffffff;
-    box-shadow: 0 -8px 24px -8px rgba(27, 21, 18, 0.18);
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-  }
-
-  .navbar-menu .navbar-end {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .navbar-menu .navbar-item {
-    display: flex;
-    margin: 0;
-    padding: 0;
-  }
-
-  .navbar-menu .button {
-    min-width: 120px;
-    min-height: 48px;
-    font-size: 13px !important;
-  }
-
-  .column.is-2:has(.menu-fixed) {
-    width: 100%;
-  }
-
   .menu-fixed {
-    position: static;
+    position: static !important;
     display: flex;
-    overflow-x: auto;
+    overflow-x: auto !important;
     gap: 7px;
+    max-height: none !important;
     padding: 10px;
     box-shadow: none;
     scrollbar-width: none;
@@ -858,22 +661,6 @@ body.dark-theme .modal-background {
     transform: none;
   }
 
-  .main-swiper,
-  .swiper {
-    margin-bottom: 28px;
-    border-radius: var(--radius-m);
-  }
-
-  .promo-slide-button img {
-    aspect-ratio: 16 / 8;
-  }
-
-  .swiper-button-next,
-  .swiper-button-prev {
-    width: 34px !important;
-    height: 34px !important;
-  }
-
   .modal-card,
   .modal-content {
     position: fixed;
@@ -892,24 +679,9 @@ body.dark-theme .modal-background {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
-
-  .promo-modal-content {
-    max-height: 92vh;
-    overflow-y: auto;
-  }
-
-  .scroll-to-top {
-    right: 16px;
-    bottom: calc(var(--bottom-bar-h) + 16px);
-  }
-
-  body.dark-theme .navbar-menu {
-    border-color: #423129;
-    background: #251b17;
-  }
 }
 
-@media (max-width: 400px) {
+@media screen and (max-width: 400px) {
   .product-grid {
     grid-template-columns: 1fr;
   }
