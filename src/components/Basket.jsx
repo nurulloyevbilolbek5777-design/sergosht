@@ -1,11 +1,93 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router";
 import Navbar from "./Navbar";
 import { ToastContainer, toast } from "react-toastify";
 
-export default function Cart() {
+const API = "https://rest.sergosht-api.uz";
+
+const TOAST = {
+  position: "bottom-right",
+  autoClose: 3500,
+  theme: "dark",
+};
+
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function getUserFirstName(user) {
+  return String(
+    user?.firstName ||
+      user?.first_name ||
+      user?.name ||
+      ""
+  ).trim();
+}
+
+function getUserLastName(user) {
+  return String(
+    user?.lastName ||
+      user?.last_name ||
+      user?.surname ||
+      ""
+  ).trim();
+}
+
+function getProductTitle(product) {
+  return product?.title || product?.name || "Товар";
+}
+
+function getProductPrice(product) {
+  return Number(product?.price || 0);
+}
+
+function getProductCount(product) {
+  return Math.max(1, Number(product?.count || 1));
+}
+
+function formatPrice(value) {
+  return Number(value || 0).toLocaleString("ru-RU");
+}
+
+function getProductWord(count) {
+  const lastTwo = count % 100;
+  const last = count % 10;
+
+  if (lastTwo >= 11 && lastTwo <= 14) {
+    return "товаров";
+  }
+
+  if (last === 1) {
+    return "товар";
+  }
+
+  if (last >= 2 && last <= 4) {
+    return "товара";
+  }
+
+  return "товаров";
+}
+
+function getResponseError(data, status) {
+  if (typeof data === "string" && data.trim()) {
+    return data;
+  }
+
+  return (
+    data?.message ||
+    data?.error ||
+    data?.detail ||
+    `Ошибка сервера: ${status}`
+  );
+}
+
+export default function Basket() {
   const [cart, setCart] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
@@ -27,38 +109,75 @@ export default function Cart() {
     }
   }, []);
 
-  function getUser() {
-    try {
-      const user = JSON.parse(
-        localStorage.getItem("user") || "null"
+  useEffect(() => {
+    if (!isCheckoutOpen) return;
+
+    function closeByEscape(event) {
+      if (event.key === "Escape") {
+        closeCheckout();
+      }
+    }
+
+    document.addEventListener("keydown", closeByEscape);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        closeByEscape
       );
 
-      return user && user.id ? user : null;
-    } catch {
-      return null;
-    }
-  }
+      document.body.style.overflow = "";
+    };
+  }, [isCheckoutOpen, isSubmitting]);
+
+  const totalQuantity = useMemo(() => {
+    return cart.reduce(
+      (sum, product) => sum + getProductCount(product),
+      0
+    );
+  }, [cart]);
+
+  const subtotal = useMemo(() => {
+    return cart.reduce((sum, product) => {
+      return (
+        sum +
+        getProductPrice(product) *
+          getProductCount(product)
+      );
+    }, 0);
+  }, [cart]);
+
+  const delivery = subtotal >= 100000 ? 0 : 10000;
+  const total = subtotal + delivery;
 
   function saveCart(newCart) {
     localStorage.setItem("cart", JSON.stringify(newCart));
     setCart(newCart);
+
+    window.dispatchEvent(new Event("storage"));
   }
 
-  function plusCount(productId) {
+  function changeCount(productId, change) {
     const product = cart.find(
       (item) => item.id === productId
     );
 
     if (!product) return;
 
-    const title = product.title || product.name || "Товар";
-    const newCount = product.count + 1;
+    const currentCount = getProductCount(product);
+    const nextCount = currentCount + change;
+
+    if (nextCount < 1) {
+      removeProduct(productId);
+      return;
+    }
 
     const newCart = cart.map((item) => {
       if (item.id === productId) {
         return {
           ...item,
-          count: newCount,
+          count: nextCount,
         };
       }
 
@@ -66,80 +185,59 @@ export default function Cart() {
     });
 
     saveCart(newCart);
-
-    toast.success(
-      newCount === 1
-        ? `Товар «${title}» добавлен в корзину`
-        : `В корзине ${newCount} ${getProductWord(
-            newCount
-          )} «${title}»`,
-      {
-        position: "bottom-right",
-        autoClose: 3000,
-        theme: "dark",
-      }
-    );
   }
 
-  function minusCount(productId) {
+  function removeProduct(productId) {
     const product = cart.find(
       (item) => item.id === productId
     );
 
-    if (!product) return;
+    const title = getProductTitle(product);
 
-    const title = product.title || product.name || "Товар";
+    const newCart = cart.filter(
+      (item) => item.id !== productId
+    );
 
-    if (product.count === 1) {
-      const newCart = cart.filter(
-        (item) => item.id !== productId
-      );
+    saveCart(newCart);
 
-      saveCart(newCart);
+    toast.info(`«${title}» удалён из корзины`, TOAST);
+  }
 
-      toast.error(
-        `Товар «${title}» полностью удалён из корзины`,
-        {
-          position: "bottom-right",
-          autoClose: 3000,
-          theme: "dark",
-        }
+  function openCheckout() {
+    const user = getStoredUser();
+
+    if (!user?.id || !user?.token) {
+      toast.warning(
+        "Чтобы оформить заказ, сначала войдите в профиль",
+        TOAST
       );
 
       return;
     }
 
-    const newCount = product.count - 1;
+    if (cart.length === 0) {
+      toast.warning("В корзине нет товаров", TOAST);
+      return;
+    }
 
-    const newCart = cart.map((item) => {
-      if (item.id === productId) {
-        return {
-          ...item,
-          count: newCount,
-        };
-      }
+    setForm((previous) => ({
+      ...previous,
+      firstName:
+        previous.firstName ||
+        getUserFirstName(user),
 
-      return item;
-    });
+      lastName:
+        previous.lastName ||
+        getUserLastName(user),
+    }));
 
-    saveCart(newCart);
-
-    toast.warning(
-      `В корзине осталось ${newCount} ${getProductWord(
-        newCount
-      )} «${title}»`,
-      {
-        position: "bottom-right",
-        autoClose: 3000,
-        theme: "dark",
-      }
-    );
+    setIsCheckoutOpen(true);
   }
 
-  function getProductWord(count) {
-    if (count === 1) return "товар";
-    if (count >= 2 && count <= 4) return "товара";
-    return "товаров";
+  function closeCheckout() {
+    if (isSubmitting) return;
+
+    setIsCheckoutOpen(false);
   }
 
   function handleFormChange(event) {
@@ -151,53 +249,23 @@ export default function Cart() {
     }));
   }
 
-  function openCheckoutForm() {
-    if (!getUser()) {
-      toast.error(
-        "Чтобы оформить заказ, сначала войдите в аккаунт",
-        {
-          position: "bottom-right",
-          autoClose: 4000,
-          theme: "dark",
-        }
-      );
-
-      return;
-    }
-
-    setShowForm(true);
-  }
-
-  function closeCheckoutForm() {
-    if (isSubmitting) return;
-
-    setShowForm(false);
-  }
-
   async function submitOrder(event) {
     event.preventDefault();
 
-    if (!getUser()) {
+    const user = getStoredUser();
+
+    if (!user?.id || !user?.token) {
       toast.error(
-        "Чтобы оформить заказ, сначала войдите в аккаунт",
-        {
-          position: "bottom-right",
-          autoClose: 4000,
-          theme: "dark",
-        }
+        "Чтобы оформить заказ, сначала войдите в профиль",
+        TOAST
       );
 
-      setShowForm(false);
+      setIsCheckoutOpen(false);
       return;
     }
 
     if (cart.length === 0) {
-      toast.error("В корзине нет товаров", {
-        position: "bottom-right",
-        autoClose: 3000,
-        theme: "dark",
-      });
-
+      toast.error("В корзине нет товаров", TOAST);
       return;
     }
 
@@ -206,412 +274,1049 @@ export default function Cart() {
       !form.lastName.trim() ||
       !form.address.trim()
     ) {
-      toast.error("Пожалуйста, заполните все поля", {
-        position: "bottom-right",
-        autoClose: 3000,
-        theme: "dark",
-      });
-
+      toast.error("Заполните все поля доставки", TOAST);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const user = JSON.parse(
-        localStorage.getItem("user") || "{}"
-      );
-
-      const products = cart.map((element) => {
-        const item = { ...element };
-
-        item.quantity = item.count;
+      const products = cart.map((product) => {
+        const item = {
+          ...product,
+          quantity: getProductCount(product),
+        };
 
         delete item.count;
         delete item.photo;
         delete item.title;
+        delete item.name;
         delete item.description;
 
         return item;
       });
 
-      const response = await fetch(
-        "https://rest.sergosht-api.uz/api/order",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: user.token,
+      const response = await fetch(`${API}/api/order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: user.token,
+        },
+        body: JSON.stringify({
+          user,
+          order: {
+            user: user.id,
+            products,
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            address: form.address.trim(),
           },
-          body: JSON.stringify({
-            user,
-            order: {
-              user: user.id,
-              products,
-              firstName: form.firstName.trim(),
-              lastName: form.lastName.trim(),
-              address: form.address.trim(),
-            },
-          }),
-        }
-      );
+        }),
+      });
+
+      const contentType =
+        response.headers.get("content-type") || "";
+
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
 
       if (!response.ok) {
-        throw new Error("Order request failed");
+        throw new Error(
+          getResponseError(data, response.status)
+        );
       }
 
-      toast.success(
-        "Ваш заказ успешно принят. Спасибо за покупку!",
-        {
-          position: "bottom-right",
-          autoClose: 5000,
-          theme: "dark",
-        }
-      );
-
       localStorage.setItem("cart", "[]");
+      window.dispatchEvent(new Event("storage"));
 
       setCart([]);
+
       setForm({
         firstName: "",
         lastName: "",
         address: "",
       });
-      setShowForm(false);
+
+      setIsCheckoutOpen(false);
+
+      toast.success("Заказ принят", {
+        position: "bottom-right",
+        autoClose: 4500,
+        theme: "dark",
+      });
     } catch (error) {
       console.error(error);
 
       toast.error(
-        "Не удалось оформить заказ. Попробуйте ещё раз.",
-        {
-          position: "bottom-right",
-          autoClose: 4000,
-          theme: "dark",
-        }
+        error.message ||
+          "Не удалось оформить заказ. Попробуйте ещё раз.",
+        TOAST
       );
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  const total = cart.reduce(
-    (sum, product) =>
-      sum + Number(product.price || 0) * product.count,
-    0
-  );
-
-  const delivery = total >= 100000 ? 0 : 10000;
-  const finalTotal = total + delivery;
-
   return (
-    <div>
+    <div className="basket-page">
       <Navbar />
 
-      <div className="container mt-5 mb-6">
-        <div className="content">
-          <h1 className="title mb-5">
-            Корзина
-          </h1>
+      <main className="basket-container">
+        <nav
+          className="basket-breadcrumb"
+          aria-label="Навигация"
+        >
+          <NavLink to="/">Главная</NavLink>
+          <span>/</span>
+          <span className="is-current">Корзина</span>
+        </nav>
 
-          {cart.length === 0 ? (
-            <div className="box has-text-centered py-6">
-              <p
-                style={{
-                  fontSize: "64px",
-                  marginBottom: "15px",
-                }}
-              >
-                🛒
+        <header className="basket-header">
+          <div>
+            <h1>Корзина</h1>
+
+            {cart.length > 0 && (
+              <p>
+                {totalQuantity}{" "}
+                {getProductWord(totalQuantity)}
               </p>
-
-              <h2 className="title is-4">
-                В вашей корзине пока нет товаров
-              </h2>
-
-              <p className="has-text-grey mb-5">
-                Перейдите в меню и выберите понравившиеся блюда.
-              </p>
-
-              <NavLink
-                to="/"
-                className="button is-danger is-medium"
-              >
-                Перейти в меню
-              </NavLink>
-            </div>
-          ) : (
-            <>
-              {cart.map((product) => {
-                const title =
-                  product.title || product.name || "Товар";
-
-                const price = Number(product.price || 0);
-                const productTotal =
-                  price * product.count;
-
-                return (
-                  <div
-                    className="card mb-5"
-                    key={product.id}
-                    style={{
-                      borderRadius: "14px",
-                      boxShadow:
-                        "0 5px 18px rgba(0, 0, 0, 0.08)",
-                    }}
-                  >
-                    <div className="card-content">
-                      <div className="media">
-                        <div className="media-left">
-                          <figure className="image is-96x96">
-                            <img
-                              src={product.photo}
-                              alt={title}
-                              style={{
-                                width: "96px",
-                                height: "96px",
-                                objectFit: "cover",
-                                borderRadius: "10px",
-                              }}
-                            />
-                          </figure>
-                        </div>
-
-                        <div className="media-content">
-                          <div className="is-flex is-justify-content-space-between is-align-items-start">
-                            <p className="title is-4 mb-2">
-                              {title}
-                            </p>
-
-                            <strong className="has-text-primary">
-                              {productTotal.toLocaleString()} сум
-                            </strong>
-                          </div>
-
-                          <p className="has-text-grey mb-4">
-                            Цена за 1 шт.:{" "}
-                            {price.toLocaleString()} сум
-                          </p>
-
-                          <div className="is-flex is-align-items-center">
-                            <button
-                              type="button"
-                              className="button is-danger is-light"
-                              onClick={() =>
-                                minusCount(product.id)
-                              }
-                              style={{
-                                width: "38px",
-                                height: "38px",
-                                borderRadius: "9px",
-                                fontSize: "22px",
-                                fontWeight: "700",
-                                padding: 0,
-                              }}
-                            >
-                              −
-                            </button>
-
-                            <span
-                              style={{
-                                minWidth: "48px",
-                                textAlign: "center",
-                                fontSize: "18px",
-                                fontWeight: "700",
-                              }}
-                            >
-                              {product.count}
-                            </span>
-
-                            <button
-                              type="button"
-                              className="button is-danger"
-                              onClick={() =>
-                                plusCount(product.id)
-                              }
-                              style={{
-                                width: "38px",
-                                height: "38px",
-                                borderRadius: "9px",
-                                fontSize: "22px",
-                                fontWeight: "700",
-                                padding: 0,
-                              }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div
-                className="box mt-5"
-                style={{
-                  maxWidth: "500px",
-                  marginLeft: "auto",
-                  borderRadius: "14px",
-                }}
-              >
-                <h2 className="title is-4">
-                  Ваш заказ
-                </h2>
-
-                <div className="is-flex is-justify-content-space-between mb-3">
-                  <span>Товары:</span>
-
-                  <strong>
-                    {total.toLocaleString()} сум
-                  </strong>
-                </div>
-
-                <div className="is-flex is-justify-content-space-between mb-3">
-                  <span>Доставка:</span>
-
-                  {delivery === 0 ? (
-                    <strong className="has-text-success">
-                      Бесплатно
-                    </strong>
-                  ) : (
-                    <strong>
-                      {delivery.toLocaleString()} сум
-                    </strong>
-                  )}
-                </div>
-
-                <hr />
-
-                <div className="is-flex is-justify-content-space-between is-size-4">
-                  <strong>Итого:</strong>
-
-                  <strong className="has-text-primary">
-                    {finalTotal.toLocaleString()} сум
-                  </strong>
-                </div>
-              </div>
-            </>
-          )}
+            )}
+          </div>
 
           {cart.length > 0 && (
-            <button
-              type="button"
-              className="button is-danger is-medium mt-4"
-              onClick={openCheckoutForm}
+            <NavLink
+              to="/"
+              className="basket-menu-link"
             >
-              Оформить заказ
-            </button>
+              Продолжить покупки
+            </NavLink>
           )}
+        </header>
 
-          {showForm && (
-            <div
-              className="box mt-5"
-              style={{
-                maxWidth: "500px",
-                borderRadius: "14px",
-              }}
+        {cart.length === 0 ? (
+          <section className="basket-empty">
+            <div className="basket-empty-icon">🛒</div>
+
+            <h2>Корзина пуста</h2>
+
+            <p>Выберите блюда из меню.</p>
+
+            <NavLink
+              to="/"
+              className="basket-primary-button"
             >
-              <h2 className="title is-4">
-                Данные для доставки
-              </h2>
+              Перейти в меню
+            </NavLink>
+          </section>
+        ) : (
+          <div className="basket-layout">
+            <section className="basket-products">
+              {cart.map((product) => {
+                const title = getProductTitle(product);
+                const price = getProductPrice(product);
+                const count = getProductCount(product);
+                const productTotal = price * count;
 
-              <form
-                onSubmit={submitOrder}
-                autoComplete="off"
-              >
-                <div className="field">
-                  <label
-                    className="label"
-                    htmlFor="firstName"
+                return (
+                  <article
+                    className="basket-item"
+                    key={product.id}
                   >
-                    Имя
-                  </label>
+                    <div className="basket-image">
+                      <img
+                        src={product.photo}
+                        alt={title}
+                        loading="lazy"
+                      />
+                    </div>
+
+                    <div className="basket-item-content">
+                      <div className="basket-item-top">
+                        <div>
+                          <h2>{title}</h2>
+
+                          <p className="basket-unit-price">
+                            {formatPrice(price)} сум за шт.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="basket-remove"
+                          onClick={() =>
+                            removeProduct(product.id)
+                          }
+                          aria-label={`Удалить ${title}`}
+                          title="Удалить"
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div className="basket-item-bottom">
+                        <div
+                          className="basket-counter"
+                          aria-label={`Количество товара ${title}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              changeCount(product.id, -1)
+                            }
+                            aria-label="Уменьшить количество"
+                          >
+                            −
+                          </button>
+
+                          <span>{count}</span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              changeCount(product.id, 1)
+                            }
+                            aria-label="Увеличить количество"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <strong className="basket-item-total">
+                          {formatPrice(productTotal)} сум
+                        </strong>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+
+            <aside className="basket-summary">
+              <h2>Ваш заказ</h2>
+
+              <div className="basket-summary-row">
+                <span>Товары</span>
+
+                <strong>
+                  {formatPrice(subtotal)} сум
+                </strong>
+              </div>
+
+              <div className="basket-summary-row">
+                <span>Доставка</span>
+
+                {delivery === 0 ? (
+                  <strong className="basket-free">
+                    Бесплатно
+                  </strong>
+                ) : (
+                  <strong>
+                    {formatPrice(delivery)} сум
+                  </strong>
+                )}
+              </div>
+
+              {delivery > 0 && (
+                <p className="basket-delivery-note">
+                  До бесплатной доставки осталось{" "}
+                  {formatPrice(100000 - subtotal)} сум
+                </p>
+              )}
+
+              <div className="basket-total-row">
+                <span>Итого</span>
+
+                <strong>
+                  {formatPrice(total)} сум
+                </strong>
+              </div>
+
+              <button
+                type="button"
+                className="basket-primary-button basket-checkout-button"
+                onClick={openCheckout}
+              >
+                Оформить заказ
+              </button>
+            </aside>
+          </div>
+        )}
+      </main>
+
+      {isCheckoutOpen && (
+        <div
+          className="basket-modal-root"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Оформление заказа"
+        >
+          <div
+            className="basket-overlay"
+            onClick={closeCheckout}
+          />
+
+          <form
+            className="basket-modal"
+            onSubmit={submitOrder}
+          >
+            <header className="basket-modal-head">
+              <h2>Оформление заказа</h2>
+
+              <button
+                type="button"
+                className="basket-close"
+                onClick={closeCheckout}
+                aria-label="Закрыть"
+                disabled={isSubmitting}
+              >
+                ×
+              </button>
+            </header>
+
+            <div className="basket-modal-body">
+              <div className="basket-order-total">
+                <span>К оплате</span>
+
+                <strong>
+                  {formatPrice(total)} сум
+                </strong>
+              </div>
+
+              <div className="basket-form-grid">
+                <label className="basket-field">
+                  <span>Имя</span>
 
                   <input
-                    id="firstName"
-                    className="input"
                     type="text"
                     name="firstName"
-                    autoComplete="off"
                     value={form.firstName}
                     onChange={handleFormChange}
-                    placeholder="Введите имя"
+                    placeholder="Ваше имя"
+                    autoComplete="given-name"
                     required
                   />
-                </div>
+                </label>
 
-                <div className="field">
-                  <label
-                    className="label"
-                    htmlFor="lastName"
-                  >
-                    Фамилия
-                  </label>
+                <label className="basket-field">
+                  <span>Фамилия</span>
 
                   <input
-                    id="lastName"
-                    className="input"
                     type="text"
                     name="lastName"
-                    autoComplete="off"
                     value={form.lastName}
                     onChange={handleFormChange}
-                    placeholder="Введите фамилию"
+                    placeholder="Ваша фамилия"
+                    autoComplete="family-name"
                     required
                   />
-                </div>
+                </label>
+              </div>
 
-                <div className="field">
-                  <label
-                    className="label"
-                    htmlFor="address"
-                  >
-                    Адрес доставки
-                  </label>
+              <label className="basket-field basket-address-field">
+                <span>Адрес доставки</span>
 
-                  <input
-                    id="address"
-                    className="input"
-                    type="text"
-                    name="address"
-                    autoComplete="off"
-                    value={form.address}
-                    onChange={handleFormChange}
-                    placeholder="Введите адрес доставки"
-                    required
-                  />
-                </div>
-
-                <div className="buttons mt-4">
-                  <button
-                    type="submit"
-                    className={`button is-danger ${
-                      isSubmitting ? "is-loading" : ""
-                    }`}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting
-                      ? "Отправляем заказ..."
-                      : "Подтвердить заказ"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="button"
-                    onClick={closeCheckoutForm}
-                    disabled={isSubmitting}
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </form>
+                <textarea
+                  name="address"
+                  value={form.address}
+                  onChange={handleFormChange}
+                  placeholder="Улица, дом, квартира"
+                  autoComplete="street-address"
+                  required
+                />
+              </label>
             </div>
-          )}
+
+            <footer className="basket-modal-foot">
+              <button
+                type="button"
+                className="basket-secondary-button"
+                onClick={closeCheckout}
+                disabled={isSubmitting}
+              >
+                Отмена
+              </button>
+
+              <button
+                type="submit"
+                className="basket-primary-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Отправка..."
+                  : "Подтвердить заказ"}
+              </button>
+            </footer>
+          </form>
         </div>
-      </div>
+      )}
 
       <ToastContainer />
+
+      <style>{`
+        .basket-page {
+          --basket-ink: #211812;
+          --basket-cream: #faf6ee;
+          --basket-line: #e8dece;
+          --basket-muted: #89796b;
+          --basket-ember: #c81e1e;
+          --basket-ember-light: #e8432f;
+          --basket-gold: #c89b3c;
+          --basket-gold-soft: #ead9ac;
+          --basket-shadow: 0 16px 42px -28px rgba(52, 31, 14, .42);
+          --basket-shadow-hover: 0 27px 58px -28px rgba(52, 31, 14, .48);
+
+          min-height: 100vh;
+          background: var(--basket-cream);
+          color: var(--basket-ink);
+        }
+
+        .basket-container {
+          width: min(1120px, calc(100% - 36px));
+          margin: 0 auto;
+          padding: 28px 0 80px;
+        }
+
+        .basket-breadcrumb {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--basket-muted);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .basket-breadcrumb a {
+          color: var(--basket-muted);
+          text-decoration: none;
+          transition: color .2s ease;
+        }
+
+        .basket-breadcrumb a:hover {
+          color: var(--basket-ember);
+        }
+
+        .basket-breadcrumb .is-current {
+          color: var(--basket-ink);
+        }
+
+        .basket-header {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 20px;
+          margin: 22px 0 30px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid var(--basket-line);
+        }
+
+        .basket-header h1 {
+          margin: 0;
+          font-family: var(--font-display);
+          font-size: clamp(34px, 5vw, 54px);
+          font-weight: 600;
+          letter-spacing: -0.04em;
+          line-height: 1;
+        }
+
+        .basket-header p {
+          margin: 10px 0 0;
+          color: var(--basket-muted);
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .basket-menu-link {
+          color: var(--basket-ember);
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .basket-menu-link:hover {
+          text-decoration: underline;
+        }
+
+        .basket-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 340px;
+          align-items: start;
+          gap: 28px;
+        }
+
+        .basket-products {
+          display: grid;
+          gap: 16px;
+        }
+
+        .basket-item {
+          display: flex;
+          gap: 18px;
+          padding: 16px;
+          border: 1px solid var(--basket-line);
+          border-radius: 20px;
+          background: #fff;
+          box-shadow: var(--basket-shadow);
+          transition:
+            transform .25s ease,
+            box-shadow .25s ease,
+            border-color .25s ease;
+        }
+
+        .basket-item:hover {
+          border-color: rgba(200, 155, 60, .55);
+          box-shadow: var(--basket-shadow-hover);
+          transform: translateY(-3px);
+        }
+
+        .basket-image {
+          flex: 0 0 auto;
+          width: 112px;
+          height: 112px;
+          overflow: hidden;
+          border-radius: 14px;
+          background: #f1e8da;
+        }
+
+        .basket-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .basket-item-content {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          min-width: 0;
+        }
+
+        .basket-item-top,
+        .basket-item-bottom {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 14px;
+        }
+
+        .basket-item-top h2 {
+          overflow: hidden;
+          margin: 0 0 5px;
+          color: var(--basket-ink);
+          font-family: var(--font-display);
+          font-size: 20px;
+          font-weight: 600;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .basket-unit-price {
+          margin: 0;
+          color: var(--basket-muted);
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .basket-remove {
+          display: grid;
+          flex: 0 0 auto;
+          width: 34px;
+          height: 34px;
+          border: 1px solid var(--basket-line);
+          border-radius: 50%;
+          background: #fff;
+          color: var(--basket-muted);
+          cursor: pointer;
+          font-size: 21px;
+          line-height: 1;
+          place-items: center;
+          transition:
+            color .2s ease,
+            border-color .2s ease,
+            transform .2s ease;
+        }
+
+        .basket-remove:hover {
+          border-color: rgba(200, 30, 30, .4);
+          color: var(--basket-ember);
+          transform: rotate(90deg);
+        }
+
+        .basket-item-bottom {
+          align-items: center;
+          margin-top: auto;
+          padding-top: 16px;
+        }
+
+        .basket-counter {
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          border: 1px solid var(--basket-line);
+          border-radius: 10px;
+          background: #fcf9f2;
+        }
+
+        .basket-counter button {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          border: 0;
+          background: transparent;
+          color: var(--basket-ink);
+          cursor: pointer;
+          font-size: 20px;
+          font-weight: 700;
+          place-items: center;
+          transition:
+            color .2s ease,
+            background .2s ease;
+        }
+
+        .basket-counter button:hover {
+          background: rgba(200, 30, 30, .08);
+          color: var(--basket-ember);
+        }
+
+        .basket-counter span {
+          display: grid;
+          min-width: 36px;
+          color: var(--basket-ink);
+          font-family: var(--font-mono);
+          font-size: 14px;
+          font-weight: 600;
+          place-items: center;
+        }
+
+        .basket-item-total {
+          color: var(--basket-ember);
+          font-family: var(--font-mono);
+          font-size: 15px;
+          font-weight: 600;
+          text-align: right;
+        }
+
+        .basket-summary {
+          position: sticky;
+          top: 100px;
+          padding: 24px;
+          border: 1px solid var(--basket-line);
+          border-radius: 20px;
+          background: #fff;
+          box-shadow: var(--basket-shadow);
+        }
+
+        .basket-summary h2 {
+          margin: 0 0 22px;
+          color: var(--basket-ink);
+          font-family: var(--font-display);
+          font-size: 24px;
+          font-weight: 600;
+        }
+
+        .basket-summary-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 15px;
+          color: #6d5f52;
+          font-size: 14px;
+        }
+
+        .basket-summary-row strong {
+          color: var(--basket-ink);
+          font-family: var(--font-mono);
+          font-size: 12px;
+          font-weight: 600;
+          text-align: right;
+        }
+
+        .basket-summary-row .basket-free {
+          color: #2f8650;
+        }
+
+        .basket-delivery-note {
+          margin: 2px 0 18px;
+          padding: 10px 11px;
+          border-radius: 10px;
+          background: #fcf9f2;
+          color: var(--basket-muted);
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .basket-total-row {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 12px;
+          margin: 20px 0;
+          padding-top: 18px;
+          border-top: 1px solid var(--basket-line);
+        }
+
+        .basket-total-row span {
+          color: var(--basket-ink);
+          font-size: 15px;
+          font-weight: 700;
+        }
+
+        .basket-total-row strong {
+          color: var(--basket-ember);
+          font-family: var(--font-mono);
+          font-size: 19px;
+          font-weight: 600;
+          text-align: right;
+        }
+
+        .basket-primary-button,
+        .basket-secondary-button {
+          min-height: 46px;
+          border-radius: 999px;
+          padding: 0 22px;
+          font-family: var(--font-body);
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          text-decoration: none;
+          transition:
+            transform .2s ease,
+            box-shadow .2s ease,
+            border-color .2s ease;
+        }
+
+        .basket-primary-button {
+          display: inline-grid;
+          border: 0;
+          background: linear-gradient(
+            135deg,
+            var(--basket-ember-light),
+            var(--basket-ember)
+          );
+          box-shadow: 0 12px 25px -14px rgba(200, 30, 30, .7);
+          color: #fff;
+          place-items: center;
+        }
+
+        .basket-primary-button:hover:not(:disabled) {
+          box-shadow: 0 18px 34px -14px rgba(200, 30, 30, .72);
+          color: #fff;
+          transform: translateY(-2px);
+        }
+
+        .basket-secondary-button {
+          border: 1px solid var(--basket-line);
+          background: #fff;
+          color: var(--basket-muted);
+        }
+
+        .basket-secondary-button:hover:not(:disabled) {
+          border-color: #cfc0ac;
+          color: var(--basket-ink);
+        }
+
+        .basket-primary-button:disabled,
+        .basket-secondary-button:disabled {
+          cursor: not-allowed;
+          opacity: .65;
+        }
+
+        .basket-checkout-button {
+          width: 100%;
+        }
+
+        .basket-empty {
+          padding: 70px 20px;
+          border: 1px dashed var(--basket-line);
+          border-radius: 20px;
+          background: rgba(255, 255, 255, .55);
+          text-align: center;
+        }
+
+        .basket-empty-icon {
+          display: grid;
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 16px;
+          border-radius: 50%;
+          background: #f2e7d5;
+          font-size: 27px;
+          place-items: center;
+        }
+
+        .basket-empty h2 {
+          margin: 0 0 8px;
+          color: var(--basket-ink);
+          font-family: var(--font-display);
+          font-size: 27px;
+          font-weight: 600;
+        }
+
+        .basket-empty p {
+          margin: 0 0 22px;
+          color: var(--basket-muted);
+          font-size: 14px;
+        }
+
+        .basket-modal-root {
+          position: fixed;
+          inset: 0;
+          z-index: 999;
+          display: grid;
+          padding: 20px;
+          place-items: center;
+        }
+
+        .basket-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(33, 24, 18, .6);
+          backdrop-filter: blur(5px);
+        }
+
+        .basket-modal {
+          position: relative;
+          width: min(600px, 100%);
+          overflow: hidden;
+          border: 1px solid var(--basket-line);
+          border-radius: 24px;
+          background: #fff;
+          box-shadow: 0 40px 90px -30px rgba(33, 24, 18, .62);
+          animation: basket-modal-show .25s var(--ease-out);
+        }
+
+        @keyframes basket-modal-show {
+          from {
+            opacity: 0;
+            transform: translateY(16px) scale(.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .basket-modal-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 23px 26px;
+          border-bottom: 1px solid var(--basket-line);
+          background: #fffdf8;
+        }
+
+        .basket-modal-head h2 {
+          margin: 0;
+          color: var(--basket-ink);
+          font-family: var(--font-display);
+          font-size: 26px;
+          font-weight: 600;
+        }
+
+        .basket-close {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          border: 1px solid var(--basket-line);
+          border-radius: 50%;
+          background: #fff;
+          color: var(--basket-muted);
+          cursor: pointer;
+          font-size: 21px;
+          place-items: center;
+          transition:
+            color .2s ease,
+            border-color .2s ease,
+            transform .2s ease;
+        }
+
+        .basket-close:hover:not(:disabled) {
+          border-color: rgba(200, 30, 30, .4);
+          color: var(--basket-ember);
+          transform: rotate(90deg);
+        }
+
+        .basket-modal-body {
+          padding: 23px 26px;
+        }
+
+        .basket-order-total {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 22px;
+          padding: 13px 14px;
+          border-left: 3px solid var(--basket-ember);
+          border-radius: 8px;
+          background: #fcf9f2;
+        }
+
+        .basket-order-total span {
+          color: var(--basket-muted);
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .basket-order-total strong {
+          color: var(--basket-ember);
+          font-family: var(--font-mono);
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .basket-form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .basket-field {
+          display: block;
+        }
+
+        .basket-field > span {
+          display: block;
+          margin-bottom: 8px;
+          color: #6d5f52;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .basket-field input,
+        .basket-field textarea {
+          width: 100%;
+          border: 1px solid var(--basket-line);
+          border-radius: 12px;
+          outline: none;
+          background: #fcf9f2;
+          color: var(--basket-ink);
+          font-family: var(--font-body);
+          font-size: 14px;
+          transition:
+            border-color .2s ease,
+            box-shadow .2s ease,
+            background .2s ease;
+        }
+
+        .basket-field input {
+          height: 46px;
+          padding: 0 13px;
+        }
+
+        .basket-field textarea {
+          min-height: 105px;
+          padding: 13px;
+          line-height: 1.6;
+          resize: vertical;
+        }
+
+        .basket-field input:focus,
+        .basket-field textarea:focus {
+          border-color: rgba(200, 155, 60, .8);
+          background: #fff;
+          box-shadow: 0 0 0 4px rgba(200, 155, 60, .14);
+        }
+
+        .basket-address-field {
+          margin-top: 16px;
+        }
+
+        .basket-modal-foot {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          padding: 17px 26px 23px;
+          border-top: 1px solid var(--basket-line);
+        }
+
+        @media screen and (max-width: 900px) {
+          .basket-layout {
+            grid-template-columns: 1fr;
+          }
+
+          .basket-summary {
+            position: static;
+          }
+        }
+
+        @media screen and (max-width: 650px) {
+          .basket-container {
+            width: calc(100% - 24px);
+            padding-top: 18px;
+          }
+
+          .basket-header {
+            align-items: stretch;
+            flex-direction: column;
+          }
+
+          .basket-item {
+            gap: 13px;
+            padding: 13px;
+          }
+
+          .basket-image {
+            width: 82px;
+            height: 82px;
+          }
+
+          .basket-item-top h2 {
+            font-size: 17px;
+          }
+
+          .basket-unit-price {
+            font-size: 11px;
+          }
+
+          .basket-item-bottom {
+            align-items: flex-end;
+            flex-direction: column;
+            gap: 10px;
+            padding-top: 10px;
+          }
+
+          .basket-item-total {
+            font-size: 13px;
+          }
+
+          .basket-modal-root {
+            padding: 0;
+            align-items: end;
+          }
+
+          .basket-modal {
+            width: 100%;
+            max-height: 92vh;
+            border-radius: 24px 24px 0 0;
+          }
+
+          .basket-modal-body {
+            max-height: 62vh;
+            overflow-y: auto;
+            padding: 20px;
+          }
+
+          .basket-modal-head,
+          .basket-modal-foot {
+            padding-right: 20px;
+            padding-left: 20px;
+          }
+
+          .basket-form-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .basket-modal-foot .basket-primary-button,
+          .basket-modal-foot .basket-secondary-button {
+            flex: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
