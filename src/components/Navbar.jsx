@@ -48,7 +48,7 @@ function getLastName(user) {
   ).trim();
 }
 
-function getShortUserName(user) {
+function getShortName(user) {
   const firstName = getFirstName(user);
   const lastName = getLastName(user);
 
@@ -56,18 +56,13 @@ function getShortUserName(user) {
     return `${lastName}.${firstName.charAt(0).toUpperCase()}`;
   }
 
-  if (lastName) {
-    return lastName;
-  }
-
-  if (firstName) {
-    return firstName;
-  }
+  if (lastName) return lastName;
+  if (firstName) return firstName;
 
   return "Профиль";
 }
 
-function getUserInitial(user) {
+function getInitial(user) {
   const firstName = getFirstName(user);
   const lastName = getLastName(user);
 
@@ -88,9 +83,11 @@ function getCartCount() {
       return 0;
     }
 
-    return cart.reduce((sum, item) => {
-      return sum + Math.max(1, Number(item.count || 1));
-    }, 0);
+    return cart.reduce(
+      (sum, item) =>
+        sum + Math.max(1, Number(item.count || 1)),
+      0
+    );
   } catch {
     return 0;
   }
@@ -113,12 +110,17 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] =
+    useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [isDarkTheme, setIsDarkTheme] =
+    useState(false);
 
   const [form, setForm] = useState(initialForm);
 
@@ -130,6 +132,7 @@ export default function Navbar() {
     }
 
     const savedUser = getUserFromStorage();
+
     const savedTheme =
       localStorage.getItem("darkTheme") === "true";
 
@@ -166,7 +169,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    function closeProfileByOutsideClick(event) {
+    function closeProfileOutside(event) {
       if (
         profileRef.current &&
         !profileRef.current.contains(event.target)
@@ -177,13 +180,13 @@ export default function Navbar() {
 
     document.addEventListener(
       "mousedown",
-      closeProfileByOutsideClick
+      closeProfileOutside
     );
 
     return () => {
       document.removeEventListener(
         "mousedown",
-        closeProfileByOutsideClick
+        closeProfileOutside
       );
     };
   }, []);
@@ -219,7 +222,6 @@ export default function Navbar() {
   }
 
   function openLoginModal() {
-    setIsMenuOpen(false);
     setIsProfileOpen(false);
     setForm(initialForm);
     setIsModalOpen(true);
@@ -249,16 +251,11 @@ export default function Navbar() {
     );
   }
 
-  function toggleProfileMenu() {
-    setIsProfileOpen((previous) => !previous);
-  }
-
   function logout() {
     localStorage.removeItem("user");
 
     setUser(null);
     setIsProfileOpen(false);
-    setIsMenuOpen(false);
 
     window.dispatchEvent(new Event("user-updated"));
   }
@@ -371,12 +368,12 @@ export default function Navbar() {
 
       window.dispatchEvent(new Event("user-updated"));
 
-      const hasProfileData = Boolean(
+      const hasName = Boolean(
         getFirstName(currentUser) &&
           getLastName(currentUser)
       );
 
-      if (hasProfileData) {
+      if (hasName) {
         setUser(currentUser);
         setIsModalOpen(false);
         setForm(initialForm);
@@ -438,7 +435,7 @@ export default function Navbar() {
     if (!form.error) return null;
 
     return (
-      <p className="navbar-form-error">
+      <p className="mobile-navbar-form-error">
         {form.error}
       </p>
     );
@@ -446,17 +443,12 @@ export default function Navbar() {
 
   return (
     <>
-      <nav
-        className="premium-navbar"
-        role="navigation"
-        aria-label="Главная навигация"
-      >
-        <div className="navbar-shell">
+      <nav className="mobile-safe-navbar">
+        <div className="mobile-safe-navbar-inner">
           <NavLink
-            className="navbar-logo"
             to="/"
-            onClick={() => setIsMenuOpen(false)}
-            aria-label="Главная страница"
+            className="mobile-safe-logo"
+            aria-label="Главная"
           >
             <img
               src="https://cdn.foodpicasso.com/assets/2023/07/06/eb22f9d7023be861993888ee788ed89d---png_original_919c8_convert.webp"
@@ -464,37 +456,12 @@ export default function Navbar() {
             />
           </NavLink>
 
-          <button
-            type="button"
-            className={`navbar-burger-button ${
-              isMenuOpen ? "is-active" : ""
-            }`}
-            aria-label="Открыть меню"
-            aria-expanded={isMenuOpen}
-            onClick={() =>
-              setIsMenuOpen((previous) => !previous)
-            }
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-
-          <div
-            className={`navbar-actions ${
-              isMenuOpen ? "is-active" : ""
-            }`}
-          >
+          <div className="mobile-safe-actions">
             <button
               type="button"
-              className="navbar-icon-button"
+              className="mobile-theme-button"
               onClick={toggleTheme}
               aria-label={
-                isDarkTheme
-                  ? "Включить светлую тему"
-                  : "Включить тёмную тему"
-              }
-              title={
                 isDarkTheme
                   ? "Светлая тема"
                   : "Тёмная тема"
@@ -505,68 +472,56 @@ export default function Navbar() {
 
             <NavLink
               to="/Basket"
-              className="navbar-cart-button"
-              onClick={() => setIsMenuOpen(false)}
+              className="mobile-cart-button"
+              aria-label="Корзина"
             >
-              <span className="navbar-cart-icon">🛒</span>
-
-              <span className="navbar-cart-text">
-                Корзина
-              </span>
+              <span>🛒</span>
 
               {cartCount > 0 && (
-                <span className="navbar-cart-count">
+                <b>
                   {cartCount > 99 ? "99+" : cartCount}
-                </span>
+                </b>
               )}
             </NavLink>
 
             {user ? (
               <div
-                className="navbar-profile-wrapper"
+                className="mobile-user-wrapper"
                 ref={profileRef}
               >
                 <button
                   type="button"
-                  className="navbar-user-button"
-                  onClick={toggleProfileMenu}
-                  aria-expanded={isProfileOpen}
-                  aria-label="Открыть данные профиля"
+                  className="mobile-user-button"
+                  onClick={() =>
+                    setIsProfileOpen((previous) => !previous)
+                  }
                 >
-                  <span className="navbar-user-avatar">
-                    {getUserInitial(user)}
+                  <span className="mobile-user-avatar">
+                    {getInitial(user)}
                   </span>
 
-                  <span className="navbar-user-short-name">
-                    {getShortUserName(user)}
-                  </span>
-
-                  <span
-                    className={`navbar-user-arrow ${
-                      isProfileOpen ? "is-open" : ""
-                    }`}
-                  >
-                    ▾
+                  <span className="mobile-user-name">
+                    {getShortName(user)}
                   </span>
                 </button>
 
                 {isProfileOpen && (
-                  <div className="navbar-profile-popup">
-                    <div className="popup-user-top">
-                      <div className="popup-avatar">
-                        {getUserInitial(user)}
+                  <div className="mobile-profile-popup">
+                    <div className="mobile-popup-top">
+                      <div className="mobile-popup-avatar">
+                        {getInitial(user)}
                       </div>
 
                       <div>
                         <strong>
-                          {getShortUserName(user)}
+                          {getShortName(user)}
                         </strong>
 
                         <span>Профиль</span>
                       </div>
                     </div>
 
-                    <div className="popup-info-list">
+                    <div className="mobile-popup-info">
                       <div>
                         <span>Имя</span>
                         <strong>
@@ -594,7 +549,7 @@ export default function Navbar() {
 
                     <button
                       type="button"
-                      className="popup-logout-button"
+                      className="mobile-popup-logout"
                       onClick={logout}
                     >
                       Выйти
@@ -605,7 +560,7 @@ export default function Navbar() {
             ) : (
               <button
                 type="button"
-                className="navbar-login-button"
+                className="mobile-login-button"
                 onClick={openLoginModal}
               >
                 Войти
@@ -617,25 +572,22 @@ export default function Navbar() {
 
       {isModalOpen && (
         <div
-          className="navbar-modal-root"
+          className="mobile-login-modal-root"
           role="dialog"
           aria-modal="true"
-          aria-label="Вход в аккаунт"
+          aria-label="Вход"
         >
           <div
-            className="navbar-modal-overlay"
+            className="mobile-login-modal-overlay"
             onClick={closeModal}
           />
 
-          <div className="navbar-modal">
-            <header className="navbar-modal-head">
+          <div className="mobile-login-modal">
+            <header className="mobile-login-modal-head">
               <div>
-                <span className="navbar-modal-step">
+                <span>
                   {form.step === "phone" && "Вход"}
-
-                  {form.step === "code" &&
-                    "Подтверждение"}
-
+                  {form.step === "code" && "Код"}
                   {form.step === "profile" &&
                     "Профиль"}
                 </span>
@@ -654,10 +606,10 @@ export default function Navbar() {
 
               <button
                 type="button"
-                className="navbar-modal-close"
                 onClick={closeModal}
-                aria-label="Закрыть"
+                className="mobile-login-close"
                 disabled={isLoading}
+                aria-label="Закрыть"
               >
                 ×
               </button>
@@ -665,15 +617,11 @@ export default function Navbar() {
 
             {form.step === "phone" && (
               <form onSubmit={sendCode}>
-                <section className="navbar-modal-body">
-                  <label
-                    className="navbar-field"
-                    htmlFor="login-phone"
-                  >
+                <section className="mobile-login-modal-body">
+                  <label className="mobile-login-field">
                     <span>Номер телефона</span>
 
                     <input
-                      id="login-phone"
                       type="tel"
                       value={form.phone}
                       onChange={(event) =>
@@ -691,10 +639,10 @@ export default function Navbar() {
                   {renderError()}
                 </section>
 
-                <footer className="navbar-modal-foot">
+                <footer className="mobile-login-modal-foot">
                   <button
                     type="submit"
-                    className="navbar-modal-primary"
+                    className="mobile-login-primary"
                     disabled={isLoading}
                   >
                     {isLoading
@@ -707,20 +655,16 @@ export default function Navbar() {
 
             {form.step === "code" && (
               <form onSubmit={verifyCode}>
-                <section className="navbar-modal-body">
-                  <p className="navbar-code-text">
+                <section className="mobile-login-modal-body">
+                  <p className="mobile-login-phone-text">
                     Код отправлен на{" "}
                     <strong>{form.phone}</strong>
                   </p>
 
-                  <label
-                    className="navbar-field"
-                    htmlFor="verification-code"
-                  >
+                  <label className="mobile-login-field">
                     <span>Код из сообщения</span>
 
                     <input
-                      id="verification-code"
                       type="text"
                       inputMode="numeric"
                       maxLength={6}
@@ -740,10 +684,10 @@ export default function Navbar() {
                   {renderError()}
                 </section>
 
-                <footer className="navbar-modal-foot">
+                <footer className="mobile-login-modal-foot">
                   <button
                     type="button"
-                    className="navbar-modal-secondary"
+                    className="mobile-login-secondary"
                     onClick={() =>
                       setForm((previous) => ({
                         ...previous,
@@ -759,7 +703,7 @@ export default function Navbar() {
 
                   <button
                     type="submit"
-                    className="navbar-modal-primary"
+                    className="mobile-login-primary"
                     disabled={isLoading}
                   >
                     {isLoading
@@ -772,16 +716,12 @@ export default function Navbar() {
 
             {form.step === "profile" && (
               <form onSubmit={saveProfile}>
-                <section className="navbar-modal-body">
-                  <div className="navbar-form-grid">
-                    <label
-                      className="navbar-field"
-                      htmlFor="first-name"
-                    >
+                <section className="mobile-login-modal-body">
+                  <div className="mobile-login-form-grid">
+                    <label className="mobile-login-field">
                       <span>Имя</span>
 
                       <input
-                        id="first-name"
                         type="text"
                         value={form.firstName}
                         onChange={(event) =>
@@ -796,14 +736,10 @@ export default function Navbar() {
                       />
                     </label>
 
-                    <label
-                      className="navbar-field"
-                      htmlFor="last-name"
-                    >
+                    <label className="mobile-login-field">
                       <span>Фамилия</span>
 
                       <input
-                        id="last-name"
                         type="text"
                         value={form.lastName}
                         onChange={(event) =>
@@ -822,10 +758,10 @@ export default function Navbar() {
                   {renderError()}
                 </section>
 
-                <footer className="navbar-modal-foot">
+                <footer className="mobile-login-modal-foot">
                   <button
                     type="submit"
-                    className="navbar-modal-primary"
+                    className="mobile-login-primary"
                   >
                     Сохранить
                   </button>
@@ -837,11 +773,11 @@ export default function Navbar() {
       )}
 
       <style>{`
-        .premium-navbar {
+        .mobile-safe-navbar {
           position: sticky;
           top: 0;
           z-index: 100;
-          min-height: 76px;
+          min-height: 70px;
           background: linear-gradient(
             180deg,
             #d41313 0%,
@@ -850,61 +786,54 @@ export default function Navbar() {
           box-shadow: 0 8px 24px -12px rgba(200, 30, 30, .55);
         }
 
-        .navbar-shell {
+        .mobile-safe-navbar-inner {
           display: flex;
           align-items: center;
           justify-content: space-between;
           width: min(1200px, calc(100% - 36px));
-          min-height: 76px;
+          min-height: 70px;
           margin: 0 auto;
-          gap: 18px;
+          gap: 15px;
         }
 
-        .navbar-logo {
+        .mobile-safe-logo {
           display: flex;
-          align-items: center;
           flex: 0 0 auto;
+          align-items: center;
         }
 
-        .navbar-logo img {
+        .mobile-safe-logo img {
           display: block;
-          max-width: 150px;
-          max-height: 46px;
-          filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25));
-          transition: transform .25s var(--ease-out);
+          max-width: 145px;
+          max-height: 43px;
+          filter: drop-shadow(
+            0 2px 6px rgba(0, 0, 0, .25)
+          );
         }
 
-        .navbar-logo:hover img {
-          transform: scale(1.04);
-        }
-
-        .navbar-actions {
+        .mobile-safe-actions {
           display: flex;
           align-items: center;
-          justify-content: flex-end;
           gap: 9px;
         }
 
-        .navbar-icon-button,
-        .navbar-cart-button,
-        .navbar-user-button,
-        .navbar-login-button {
+        .mobile-theme-button,
+        .mobile-cart-button,
+        .mobile-user-button,
+        .mobile-login-button {
           min-height: 42px;
           border-radius: 999px;
           font-family: var(--font-body);
           font-size: 13px;
           font-weight: 700;
-          transition:
-            transform .2s var(--ease-out),
-            box-shadow .2s ease,
-            background .2s ease;
         }
 
-        .navbar-icon-button {
+        .mobile-theme-button {
           display: grid;
           width: 42px;
           padding: 0;
           border: 1px solid rgba(255, 255, 255, .25);
+          border-radius: 50%;
           background: rgba(255, 255, 255, .12);
           color: #fff;
           cursor: pointer;
@@ -912,37 +841,24 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .navbar-icon-button:hover {
-          background: rgba(255, 255, 255, .2);
-          transform: translateY(-1px);
-        }
-
-        .navbar-cart-button {
+        .mobile-cart-button {
           position: relative;
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          padding: 0 17px;
+          display: grid;
+          width: 42px;
+          padding: 0;
           border: 1px solid rgba(255, 255, 255, .25);
+          border-radius: 50%;
           background: rgba(255, 255, 255, .12);
           color: #fff;
+          font-size: 17px;
+          place-items: center;
           text-decoration: none;
         }
 
-        .navbar-cart-button:hover {
-          background: rgba(255, 255, 255, .2);
-          color: #fff;
-          transform: translateY(-1px);
-        }
-
-        .navbar-cart-icon {
-          font-size: 16px;
-        }
-
-        .navbar-cart-count {
+        .mobile-cart-button b {
           position: absolute;
           top: -8px;
-          right: -7px;
+          right: -8px;
           display: grid;
           min-width: 21px;
           height: 21px;
@@ -953,29 +869,14 @@ export default function Navbar() {
           color: #c81e1e;
           font-family: var(--font-mono);
           font-size: 10px;
-          font-weight: 700;
           place-items: center;
         }
 
-        .navbar-login-button {
-          padding: 0 21px;
-          border: 0;
-          background: #fff;
-          box-shadow: 0 8px 16px -8px rgba(0, 0, 0, .35);
-          color: #a81616;
-          cursor: pointer;
-        }
-
-        .navbar-login-button:hover {
-          box-shadow: 0 12px 22px -9px rgba(0, 0, 0, .4);
-          transform: translateY(-1px);
-        }
-
-        .navbar-profile-wrapper {
+        .mobile-user-wrapper {
           position: relative;
         }
 
-        .navbar-user-button {
+        .mobile-user-button {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -986,55 +887,49 @@ export default function Navbar() {
           cursor: pointer;
         }
 
-        .navbar-user-button:hover {
-          background: rgba(255, 255, 255, .2);
-          transform: translateY(-1px);
-        }
-
-        .navbar-user-avatar {
+        .mobile-user-avatar {
           display: grid;
           width: 32px;
           height: 32px;
           border: 1px solid rgba(255, 255, 255, .55);
           border-radius: 50%;
-          background: rgba(27, 21, 18, .25);
+          background: rgba(27, 21, 18, .24);
           color: #fff;
           font-family: var(--font-display);
           font-size: 16px;
           place-items: center;
         }
 
-        .navbar-user-short-name {
-          max-width: 120px;
+        .mobile-user-name {
+          max-width: 130px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .navbar-user-arrow {
-          font-size: 12px;
-          transition: transform .2s ease;
+        .mobile-login-button {
+          padding: 0 19px;
+          border: 0;
+          background: #fff;
+          color: #a81616;
+          cursor: pointer;
         }
 
-        .navbar-user-arrow.is-open {
-          transform: rotate(180deg);
-        }
-
-        .navbar-profile-popup {
+        .mobile-profile-popup {
           position: absolute;
           top: calc(100% + 12px);
           right: 0;
-          width: 290px;
+          width: 285px;
           overflow: hidden;
           border: 1px solid var(--cream-deep);
           border-radius: 18px;
           background: #fff;
           box-shadow: 0 22px 48px -20px rgba(27, 21, 18, .48);
           color: var(--ink);
-          animation: profile-popup-show .2s var(--ease-out);
+          animation: mobile-popup-show .2s var(--ease-out);
         }
 
-        @keyframes profile-popup-show {
+        @keyframes mobile-popup-show {
           from {
             opacity: 0;
             transform: translateY(-7px) scale(.98);
@@ -1046,7 +941,7 @@ export default function Navbar() {
           }
         }
 
-        .popup-user-top {
+        .mobile-popup-top {
           display: flex;
           align-items: center;
           gap: 11px;
@@ -1055,7 +950,7 @@ export default function Navbar() {
           background: #fffdf8;
         }
 
-        .popup-avatar {
+        .mobile-popup-avatar {
           display: grid;
           width: 42px;
           height: 42px;
@@ -1072,36 +967,34 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .popup-user-top > div:last-child {
+        .mobile-popup-top div:last-child {
           display: grid;
           gap: 2px;
         }
 
-        .popup-user-top strong {
-          color: var(--ink);
+        .mobile-popup-top strong {
           font-family: var(--font-display);
           font-size: 17px;
-          font-weight: 600;
         }
 
-        .popup-user-top span {
+        .mobile-popup-top span {
           color: #938474;
           font-size: 11px;
           font-weight: 600;
         }
 
-        .popup-info-list {
+        .mobile-popup-info {
           display: grid;
           gap: 13px;
           padding: 16px;
         }
 
-        .popup-info-list div {
+        .mobile-popup-info div {
           display: grid;
           gap: 3px;
         }
 
-        .popup-info-list span {
+        .mobile-popup-info span {
           color: #9a8b7c;
           font-size: 10px;
           font-weight: 800;
@@ -1109,17 +1002,14 @@ export default function Navbar() {
           text-transform: uppercase;
         }
 
-        .popup-info-list strong {
+        .mobile-popup-info strong {
           overflow: hidden;
-          color: var(--ink);
-          font-family: var(--font-body);
           font-size: 13px;
-          font-weight: 700;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .popup-logout-button {
+        .mobile-popup-logout {
           width: calc(100% - 32px);
           min-height: 42px;
           margin: 0 16px 16px;
@@ -1131,50 +1021,9 @@ export default function Navbar() {
           font-family: var(--font-body);
           font-size: 13px;
           font-weight: 700;
-          transition:
-            background .2s ease,
-            transform .2s ease;
         }
 
-        .popup-logout-button:hover {
-          background: #fbeaea;
-          transform: translateY(-1px);
-        }
-
-        .navbar-burger-button {
-          display: none;
-          width: 42px;
-          height: 42px;
-          padding: 0;
-          border: 1px solid rgba(255, 255, 255, .3);
-          border-radius: 12px;
-          background: rgba(255, 255, 255, .1);
-          cursor: pointer;
-        }
-
-        .navbar-burger-button span {
-          display: block;
-          width: 19px;
-          height: 2px;
-          margin: 4px auto;
-          border-radius: 2px;
-          background: #fff;
-          transition: transform .2s ease, opacity .2s ease;
-        }
-
-        .navbar-burger-button.is-active span:nth-child(1) {
-          transform: translateY(6px) rotate(45deg);
-        }
-
-        .navbar-burger-button.is-active span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .navbar-burger-button.is-active span:nth-child(3) {
-          transform: translateY(-6px) rotate(-45deg);
-        }
-
-        .navbar-modal-root {
+        .mobile-login-modal-root {
           position: fixed;
           inset: 0;
           z-index: 999;
@@ -1183,14 +1032,14 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .navbar-modal-overlay {
+        .mobile-login-modal-overlay {
           position: absolute;
           inset: 0;
           background: rgba(27, 21, 18, .62);
           backdrop-filter: blur(5px);
         }
 
-        .navbar-modal {
+        .mobile-login-modal {
           position: relative;
           width: min(520px, 100%);
           overflow: hidden;
@@ -1198,22 +1047,9 @@ export default function Navbar() {
           border-radius: 24px;
           background: #fff;
           box-shadow: 0 40px 90px -30px rgba(27, 21, 18, .65);
-          animation: navbar-modal-show .25s var(--ease-out);
         }
 
-        @keyframes navbar-modal-show {
-          from {
-            opacity: 0;
-            transform: translateY(16px) scale(.98);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        .navbar-modal-head {
+        .mobile-login-modal-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1223,12 +1059,12 @@ export default function Navbar() {
           background: #fffdf8;
         }
 
-        .navbar-modal-head > div {
+        .mobile-login-modal-head div {
           display: grid;
           gap: 4px;
         }
 
-        .navbar-modal-step {
+        .mobile-login-modal-head span {
           color: var(--ember);
           font-family: var(--font-mono);
           font-size: 10px;
@@ -1237,7 +1073,7 @@ export default function Navbar() {
           text-transform: uppercase;
         }
 
-        .navbar-modal-head h2 {
+        .mobile-login-modal-head h2 {
           margin: 0;
           color: var(--ink);
           font-family: var(--font-display);
@@ -1245,7 +1081,7 @@ export default function Navbar() {
           font-weight: 600;
         }
 
-        .navbar-modal-close {
+        .mobile-login-close {
           display: grid;
           width: 36px;
           height: 36px;
@@ -1256,48 +1092,17 @@ export default function Navbar() {
           cursor: pointer;
           font-size: 21px;
           place-items: center;
-          transition:
-            color .2s ease,
-            border-color .2s ease,
-            transform .2s ease;
         }
 
-        .navbar-modal-close:hover:not(:disabled) {
-          border-color: rgba(200, 30, 30, .4);
-          color: var(--ember);
-          transform: rotate(90deg);
-        }
-
-        .navbar-modal-body {
+        .mobile-login-modal-body {
           padding: 24px 26px;
         }
 
-        .navbar-code-text {
-          margin: 0 0 18px;
-          padding: 12px 14px;
-          border-left: 3px solid var(--ember);
-          border-radius: 8px;
-          background: var(--cream);
-          color: #66584c;
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .navbar-code-text strong {
-          color: var(--ink);
-        }
-
-        .navbar-form-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 14px;
-        }
-
-        .navbar-field {
+        .mobile-login-field {
           display: block;
         }
 
-        .navbar-field > span {
+        .mobile-login-field > span {
           display: block;
           margin-bottom: 8px;
           color: #6d5f52;
@@ -1305,7 +1110,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
-        .navbar-field input {
+        .mobile-login-field input {
           width: 100%;
           height: 48px;
           padding: 0 14px;
@@ -1314,21 +1119,32 @@ export default function Navbar() {
           outline: none;
           background: #fcf9f2;
           color: var(--ink);
-          font-family: var(--font-body);
           font-size: 15px;
-          transition:
-            border-color .2s ease,
-            box-shadow .2s ease,
-            background .2s ease;
         }
 
-        .navbar-field input:focus {
-          border-color: rgba(200, 155, 60, .8);
+        .mobile-login-field input:focus {
+          border-color: var(--ember);
           background: #fff;
-          box-shadow: 0 0 0 4px rgba(200, 155, 60, .14);
+          box-shadow: 0 0 0 4px rgba(200, 30, 30, .1);
         }
 
-        .navbar-form-error {
+        .mobile-login-form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .mobile-login-phone-text {
+          margin: 0 0 18px;
+          padding: 12px 14px;
+          border-left: 3px solid var(--ember);
+          border-radius: 8px;
+          background: var(--cream);
+          color: #66584c;
+          font-size: 13px;
+        }
+
+        .mobile-navbar-form-error {
           margin: 14px 0 0;
           padding: 11px 12px;
           border-radius: 10px;
@@ -1338,7 +1154,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
-        .navbar-modal-foot {
+        .mobile-login-modal-foot {
           display: flex;
           justify-content: flex-end;
           gap: 10px;
@@ -1346,8 +1162,8 @@ export default function Navbar() {
           border-top: 1px solid var(--cream-deep);
         }
 
-        .navbar-modal-primary,
-        .navbar-modal-secondary {
+        .mobile-login-primary,
+        .mobile-login-secondary {
           min-height: 46px;
           border-radius: 999px;
           padding: 0 22px;
@@ -1355,194 +1171,168 @@ export default function Navbar() {
           font-size: 14px;
           font-weight: 700;
           cursor: pointer;
-          transition:
-            transform .2s ease,
-            box-shadow .2s ease,
-            border-color .2s ease;
         }
 
-        .navbar-modal-primary {
+        .mobile-login-primary {
           border: 0;
           background: linear-gradient(
             135deg,
             var(--ember-bright),
             var(--ember)
           );
-          box-shadow: 0 12px 25px -14px rgba(200, 30, 30, .7);
           color: #fff;
         }
 
-        .navbar-modal-primary:hover:not(:disabled) {
-          box-shadow: 0 18px 34px -14px rgba(200, 30, 30, .72);
-          transform: translateY(-2px);
-        }
-
-        .navbar-modal-secondary {
+        .mobile-login-secondary {
           border: 1px solid var(--cream-deep);
           background: #fff;
           color: #89796b;
         }
 
-        .navbar-modal-secondary:hover:not(:disabled) {
-          border-color: #cfc0ac;
-          color: var(--ink);
-        }
-
-        .navbar-modal-primary:disabled,
-        .navbar-modal-secondary:disabled,
-        .navbar-modal-close:disabled {
-          cursor: not-allowed;
-          opacity: .65;
-        }
-
-        body.dark-theme .premium-navbar {
+        body.dark-theme .mobile-safe-navbar {
           background: linear-gradient(
             180deg,
             #431c18 0%,
             #27130f 100%
           );
-          box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .7);
         }
 
-        body.dark-theme .navbar-icon-button,
-        body.dark-theme .navbar-cart-button,
-        body.dark-theme .navbar-user-button {
-          border-color: rgba(255, 255, 255, .18);
-          background: rgba(255, 255, 255, .08);
-        }
-
-        body.dark-theme .navbar-profile-popup {
+        body.dark-theme .mobile-profile-popup,
+        body.dark-theme .mobile-login-modal {
           border-color: #45342b;
           background: #251b17;
           color: #f8f3ea;
         }
 
-        body.dark-theme .popup-user-top {
+        body.dark-theme .mobile-popup-top,
+        body.dark-theme .mobile-login-modal-head {
           border-color: #45342b;
           background: #30221c;
         }
 
-        body.dark-theme .popup-user-top strong,
-        body.dark-theme .popup-info-list strong {
+        body.dark-theme .mobile-popup-top strong,
+        body.dark-theme .mobile-popup-info strong,
+        body.dark-theme .mobile-login-modal-head h2 {
           color: #f8f3ea;
         }
 
-        body.dark-theme .popup-user-top span,
-        body.dark-theme .popup-info-list span {
+        body.dark-theme .mobile-popup-top span,
+        body.dark-theme .mobile-popup-info span {
           color: #bba999;
         }
 
-        body.dark-theme .popup-logout-button {
-          border-color: #6f3730;
-          background: #37201d;
-          color: #ff8b80;
+        body.dark-theme .mobile-login-field input {
+          border-color: #584036;
+          background: #342620;
+          color: #f8f3ea;
         }
 
-        @media screen and (max-width: 800px) {
-          .premium-navbar {
+        @media screen and (max-width: 700px) {
+          .mobile-safe-navbar {
             min-height: 62px;
           }
 
-          .navbar-shell {
+          .mobile-safe-navbar-inner {
             width: calc(100% - 24px);
             min-height: 62px;
+            gap: 8px;
           }
 
-          .navbar-logo img {
-            max-width: 115px;
-            max-height: 37px;
+          .mobile-safe-logo img {
+            max-width: 110px;
+            max-height: 36px;
           }
 
-          .navbar-burger-button {
-            display: block;
+          .mobile-safe-actions {
+            gap: 6px;
           }
 
-          .navbar-actions {
-            position: absolute;
-            top: 70px;
-            right: 12px;
-            left: 12px;
+          .mobile-theme-button {
             display: none;
-            align-items: stretch;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 12px;
-            border: 1px solid var(--cream-deep);
-            border-radius: 16px;
-            background: #fff;
-            box-shadow: 0 18px 40px -20px rgba(27, 21, 18, .45);
           }
 
-          .navbar-actions.is-active {
-            display: flex;
+          .mobile-cart-button {
+            width: 40px;
+            height: 40px;
           }
 
-          .navbar-icon-button,
-          .navbar-cart-button,
-          .navbar-user-button,
-          .navbar-login-button {
-            min-height: 46px;
+          .mobile-user-button {
+            min-height: 40px;
+            padding: 0 9px 0 4px;
           }
 
-          .navbar-cart-button,
-          .navbar-login-button {
-            flex: 1;
-            justify-content: center;
+          .mobile-user-avatar {
+            width: 30px;
+            height: 30px;
           }
 
-          .navbar-profile-wrapper {
-            flex: 1;
+          .mobile-user-name {
+            max-width: 105px;
+            font-size: 12px;
           }
 
-          .navbar-user-button {
-            width: 100%;
-            justify-content: center;
+          .mobile-login-button {
+            min-height: 40px;
+            padding: 0 15px;
+            font-size: 12px;
           }
 
-          .navbar-profile-popup {
+          .mobile-profile-popup {
             position: fixed;
-            top: auto;
             right: 12px;
             bottom: 82px;
             left: 12px;
+            top: auto;
             width: auto;
           }
 
-          body.dark-theme .navbar-actions {
-            border-color: #45332a;
-            background: #251b17;
-          }
-
-          .navbar-modal-root {
+          .mobile-login-modal-root {
             padding: 0;
             align-items: end;
           }
 
-          .navbar-modal {
+          .mobile-login-modal {
             width: 100%;
             max-height: 92vh;
             border-radius: 24px 24px 0 0;
           }
 
-          .navbar-modal-body {
+          .mobile-login-modal-body {
             max-height: 62vh;
             overflow-y: auto;
             padding: 20px;
           }
 
-          .navbar-modal-head,
-          .navbar-modal-foot {
+          .mobile-login-modal-head,
+          .mobile-login-modal-foot {
             padding-right: 20px;
             padding-left: 20px;
           }
 
-          .navbar-form-grid {
+          .mobile-login-form-grid {
             grid-template-columns: 1fr;
           }
 
-          .navbar-modal-foot .navbar-modal-primary,
-          .navbar-modal-foot .navbar-modal-secondary {
+          .mobile-login-modal-foot .mobile-login-primary,
+          .mobile-login-modal-foot .mobile-login-secondary {
             flex: 1;
+          }
+        }
+
+        @media screen and (max-width: 390px) {
+          .mobile-safe-logo img {
+            max-width: 88px;
+          }
+
+          .mobile-user-name {
+            display: none;
+          }
+
+          .mobile-user-button {
+            width: 40px;
+            padding: 4px;
+            border-radius: 50%;
+            justify-content: center;
           }
         }
       `}</style>
