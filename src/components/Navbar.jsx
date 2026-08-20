@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router";
 
+
 const API = "https://rest.sergosht-api.uz";
+
+
+const MAX_NAME_LENGTH = 25;
+
 
 const initialForm = {
   step: "phone",
@@ -12,6 +17,7 @@ const initialForm = {
   error: "",
 };
 
+
 function getUserFromStorage() {
   try {
     return JSON.parse(localStorage.getItem("user") || "null");
@@ -19,6 +25,7 @@ function getUserFromStorage() {
     return null;
   }
 }
+
 
 function getPhone(user) {
   return (
@@ -30,6 +37,7 @@ function getPhone(user) {
   );
 }
 
+
 function getFirstName(user) {
   return String(
     user?.firstName ||
@@ -38,6 +46,7 @@ function getFirstName(user) {
       ""
   ).trim();
 }
+
 
 function getLastName(user) {
   return String(
@@ -48,23 +57,29 @@ function getLastName(user) {
   ).trim();
 }
 
+
 function getShortName(user) {
   const firstName = getFirstName(user);
   const lastName = getLastName(user);
+
 
   if (lastName && firstName) {
     return `${lastName}.${firstName.charAt(0).toUpperCase()}`;
   }
 
+
   if (lastName) return lastName;
   if (firstName) return firstName;
+
 
   return "Профиль";
 }
 
+
 function getInitial(user) {
   const firstName = getFirstName(user);
   const lastName = getLastName(user);
+
 
   return (
     lastName.charAt(0).toUpperCase() ||
@@ -73,13 +88,16 @@ function getInitial(user) {
   );
 }
 
+
 function getCartCount() {
   try {
     const cart = JSON.parse(
       localStorage.getItem("cart") || "[]"
     );
 
+
     if (!Array.isArray(cart)) return 0;
+
 
     return cart.reduce(
       (sum, item) =>
@@ -91,10 +109,12 @@ function getCartCount() {
   }
 }
 
+
 function getResponseError(data, status) {
   if (typeof data === "string" && data.trim()) {
     return data;
   }
+
 
   return (
     data?.message ||
@@ -104,39 +124,51 @@ function getResponseError(data, status) {
   );
 }
 
+
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
 
+
   const [isProfileOpen, setIsProfileOpen] =
     useState(false);
+
 
   const [isModalOpen, setIsModalOpen] =
     useState(false);
 
+
   const [isLoading, setIsLoading] =
     useState(false);
+
 
   const [isDarkTheme, setIsDarkTheme] =
     useState(false);
 
+
   const [form, setForm] = useState(initialForm);
 
+
   const profileRef = useRef(null);
+
 
   useEffect(() => {
     if (!localStorage.getItem("cart")) {
       localStorage.setItem("cart", "[]");
     }
 
+
     const savedUser = getUserFromStorage();
+
 
     const savedTheme =
       localStorage.getItem("darkTheme") === "true";
 
+
     setUser(savedUser);
     setCartCount(getCartCount());
     setIsDarkTheme(savedTheme);
+
 
     if (savedTheme) {
       document.body.classList.add("dark-theme");
@@ -144,17 +176,21 @@ export default function Navbar() {
       document.body.classList.remove("dark-theme");
     }
 
+
     function updateCart() {
       setCartCount(getCartCount());
     }
+
 
     function updateUser() {
       setUser(getUserFromStorage());
     }
 
+
     window.addEventListener("storage", updateCart);
     window.addEventListener("cart-updated", updateCart);
     window.addEventListener("user-updated", updateUser);
+
 
     return () => {
       window.removeEventListener("storage", updateCart);
@@ -169,6 +205,7 @@ export default function Navbar() {
     };
   }, []);
 
+
   useEffect(() => {
     function handleOutsideClick(event) {
       if (
@@ -179,10 +216,12 @@ export default function Navbar() {
       }
     }
 
+
     document.addEventListener(
       "mousedown",
       handleOutsideClick
     );
+
 
     return () => {
       document.removeEventListener(
@@ -192,8 +231,10 @@ export default function Navbar() {
     };
   }, []);
 
+
   useEffect(() => {
     if (!isModalOpen) return;
+
 
     function closeByEscape(event) {
       if (event.key === "Escape") {
@@ -201,8 +242,10 @@ export default function Navbar() {
       }
     }
 
+
     document.addEventListener("keydown", closeByEscape);
     document.body.style.overflow = "hidden";
+
 
     return () => {
       document.removeEventListener(
@@ -210,9 +253,11 @@ export default function Navbar() {
         closeByEscape
       );
 
+
       document.body.style.overflow = "";
     };
   }, [isModalOpen, isLoading]);
+
 
   function changeForm(name, value) {
     setForm((previous) => ({
@@ -222,23 +267,34 @@ export default function Navbar() {
     }));
   }
 
+
+  function changeName(name, value) {
+    changeForm(name, value.slice(0, MAX_NAME_LENGTH));
+  }
+
+
   function openLoginModal() {
     setIsProfileOpen(false);
     setForm(initialForm);
     setIsModalOpen(true);
   }
 
+
   function closeModal() {
     if (isLoading) return;
+
 
     setIsModalOpen(false);
     setForm(initialForm);
   }
 
+
   function toggleTheme() {
     const nextTheme = !isDarkTheme;
 
+
     setIsDarkTheme(nextTheme);
+
 
     if (nextTheme) {
       document.body.classList.add("dark-theme");
@@ -246,30 +302,38 @@ export default function Navbar() {
       document.body.classList.remove("dark-theme");
     }
 
+
     localStorage.setItem(
       "darkTheme",
       String(nextTheme)
     );
   }
 
+
   function logout() {
     localStorage.removeItem("user");
+
 
     setUser(null);
     setIsProfileOpen(false);
 
+
     window.dispatchEvent(new Event("user-updated"));
   }
 
+
   async function sendCode(event) {
     event.preventDefault();
+
 
     if (!form.phone.trim()) {
       changeForm("error", "Введите номер телефона");
       return;
     }
 
+
     setIsLoading(true);
+
 
     try {
       const response = await fetch(
@@ -286,18 +350,22 @@ export default function Navbar() {
         }
       );
 
+
       const contentType =
         response.headers.get("content-type") || "";
+
 
       const data = contentType.includes("application/json")
         ? await response.json()
         : await response.text();
+
 
       if (!response.ok) {
         throw new Error(
           getResponseError(data, response.status)
         );
       }
+
 
       setForm((previous) => ({
         ...previous,
@@ -306,6 +374,7 @@ export default function Navbar() {
       }));
     } catch (error) {
       console.error(error);
+
 
       setForm((previous) => ({
         ...previous,
@@ -318,15 +387,19 @@ export default function Navbar() {
     }
   }
 
+
   async function verifyCode(event) {
     event.preventDefault();
+
 
     if (!form.code.trim()) {
       changeForm("error", "Введите код из сообщения");
       return;
     }
 
+
     setIsLoading(true);
+
 
     try {
       const response = await fetch(
@@ -344,12 +417,15 @@ export default function Navbar() {
         }
       );
 
+
       const contentType =
         response.headers.get("content-type") || "";
+
 
       const data = contentType.includes("application/json")
         ? await response.json()
         : await response.text();
+
 
       if (!response.ok || data?.error) {
         throw new Error(
@@ -357,22 +433,27 @@ export default function Navbar() {
         );
       }
 
+
       const currentUser = {
         ...data,
         phone: getPhone(data) || form.phone.trim(),
       };
+
 
       localStorage.setItem(
         "user",
         JSON.stringify(currentUser)
       );
 
+
       window.dispatchEvent(new Event("user-updated"));
+
 
       const hasName = Boolean(
         getFirstName(currentUser) &&
           getLastName(currentUser)
       );
+
 
       if (hasName) {
         setUser(currentUser);
@@ -388,6 +469,7 @@ export default function Navbar() {
     } catch (error) {
       console.error(error);
 
+
       setForm((previous) => ({
         ...previous,
         error:
@@ -399,8 +481,10 @@ export default function Navbar() {
     }
   }
 
+
   function saveProfile(event) {
     event.preventDefault();
+
 
     if (
       !form.firstName.trim() ||
@@ -410,30 +494,42 @@ export default function Navbar() {
       return;
     }
 
+
     const savedUser = getUserFromStorage() || {};
+
 
     const updatedUser = {
       ...savedUser,
       phone: getPhone(savedUser) || form.phone.trim(),
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
+      firstName: form.firstName
+        .trim()
+        .slice(0, MAX_NAME_LENGTH),
+      lastName: form.lastName
+        .trim()
+        .slice(0, MAX_NAME_LENGTH),
     };
+
 
     localStorage.setItem(
       "user",
       JSON.stringify(updatedUser)
     );
 
+
     setUser(updatedUser);
 
+
     window.dispatchEvent(new Event("user-updated"));
+
 
     setIsModalOpen(false);
     setForm(initialForm);
   }
 
+
   function renderError() {
     if (!form.error) return null;
+
 
     return (
       <p className="safe-navbar-error">
@@ -441,6 +537,7 @@ export default function Navbar() {
       </p>
     );
   }
+
 
   return (
     <>
@@ -460,6 +557,7 @@ export default function Navbar() {
             />
           </NavLink>
 
+
           <div className="safe-navbar-actions">
             <button
               type="button"
@@ -474,6 +572,7 @@ export default function Navbar() {
               {isDarkTheme ? "☀" : "◐"}
             </button>
 
+
             <NavLink
               to="/Basket"
               className="safe-cart-button"
@@ -481,12 +580,14 @@ export default function Navbar() {
             >
               <span>🛒</span>
 
+
               {cartCount > 0 && (
                 <b>
                   {cartCount > 99 ? "99+" : cartCount}
                 </b>
               )}
             </NavLink>
+
 
             {user ? (
               <div
@@ -506,10 +607,12 @@ export default function Navbar() {
                     {getInitial(user)}
                   </span>
 
+
                   <span className="safe-user-name">
                     {getShortName(user)}
                   </span>
                 </button>
+
 
                 {isProfileOpen && (
                   <div className="safe-profile-popup">
@@ -518,14 +621,17 @@ export default function Navbar() {
                         {getInitial(user)}
                       </div>
 
+
                       <div>
                         <strong>
                           {getShortName(user)}
                         </strong>
 
+
                         <span>Профиль</span>
                       </div>
                     </div>
+
 
                     <div className="safe-popup-info">
                       <div>
@@ -536,6 +642,7 @@ export default function Navbar() {
                         </strong>
                       </div>
 
+
                       <div>
                         <span>Фамилия</span>
                         <strong>
@@ -543,6 +650,7 @@ export default function Navbar() {
                             "Не указана"}
                         </strong>
                       </div>
+
 
                       <div>
                         <span>Номер</span>
@@ -552,6 +660,7 @@ export default function Navbar() {
                         </strong>
                       </div>
                     </div>
+
 
                     <button
                       type="button"
@@ -576,6 +685,7 @@ export default function Navbar() {
         </div>
       </nav>
 
+
       {isModalOpen && (
         <div
           className="safe-modal-root"
@@ -588,6 +698,7 @@ export default function Navbar() {
             onClick={closeModal}
           />
 
+
           <div className="safe-modal">
             <header className="safe-modal-head">
               <div>
@@ -598,17 +709,21 @@ export default function Navbar() {
                     "Профиль"}
                 </span>
 
+
                 <h2>
                   {form.step === "phone" &&
                     "Введите номер"}
 
+
                   {form.step === "code" &&
                     "Введите код"}
+
 
                   {form.step === "profile" &&
                     "Ваши данные"}
                 </h2>
               </div>
+
 
               <button
                 type="button"
@@ -620,11 +735,13 @@ export default function Navbar() {
               </button>
             </header>
 
+
             {form.step === "phone" && (
               <form onSubmit={sendCode}>
                 <section className="safe-modal-body">
                   <label className="safe-field">
                     <span>Номер телефона</span>
+
 
                     <input
                       type="tel"
@@ -641,8 +758,10 @@ export default function Navbar() {
                     />
                   </label>
 
+
                   {renderError()}
                 </section>
+
 
                 <footer className="safe-modal-foot">
                   <button
@@ -658,6 +777,7 @@ export default function Navbar() {
               </form>
             )}
 
+
             {form.step === "code" && (
               <form onSubmit={verifyCode}>
                 <section className="safe-modal-body">
@@ -666,8 +786,10 @@ export default function Navbar() {
                     <strong>{form.phone}</strong>
                   </p>
 
+
                   <label className="safe-field">
                     <span>Код из сообщения</span>
+
 
                     <input
                       type="text"
@@ -686,8 +808,10 @@ export default function Navbar() {
                     />
                   </label>
 
+
                   {renderError()}
                 </section>
+
 
                 <footer className="safe-modal-foot">
                   <button
@@ -706,6 +830,7 @@ export default function Navbar() {
                     Назад
                   </button>
 
+
                   <button
                     type="submit"
                     className="safe-primary-button"
@@ -719,6 +844,7 @@ export default function Navbar() {
               </form>
             )}
 
+
             {form.step === "profile" && (
               <form onSubmit={saveProfile}>
                 <section className="safe-modal-body">
@@ -726,11 +852,13 @@ export default function Navbar() {
                     <label className="safe-field">
                       <span>Имя</span>
 
+
                       <input
                         type="text"
+                        maxLength={MAX_NAME_LENGTH}
                         value={form.firstName}
                         onChange={(event) =>
-                          changeForm(
+                          changeName(
                             "firstName",
                             event.target.value
                           )
@@ -741,14 +869,17 @@ export default function Navbar() {
                       />
                     </label>
 
+
                     <label className="safe-field">
                       <span>Фамилия</span>
 
+
                       <input
                         type="text"
+                        maxLength={MAX_NAME_LENGTH}
                         value={form.lastName}
                         onChange={(event) =>
-                          changeForm(
+                          changeName(
                             "lastName",
                             event.target.value
                           )
@@ -760,8 +891,10 @@ export default function Navbar() {
                     </label>
                   </div>
 
+
                   {renderError()}
                 </section>
+
 
                 <footer className="safe-modal-foot">
                   <button
@@ -777,6 +910,7 @@ export default function Navbar() {
         </div>
       )}
 
+
       <style>{`
         html,
         body,
@@ -784,6 +918,7 @@ export default function Navbar() {
           max-width: 100%;
           overflow-x: hidden;
         }
+
 
         .safe-navbar {
           position: sticky;
@@ -799,6 +934,7 @@ export default function Navbar() {
           box-shadow: 0 8px 24px -12px rgba(200, 30, 30, .55);
         }
 
+
         .safe-navbar-inner {
           display: flex;
           align-items: center;
@@ -809,12 +945,14 @@ export default function Navbar() {
           gap: 12px;
         }
 
+
         .safe-navbar-logo {
           display: flex;
           flex: 0 1 auto;
           min-width: 0;
           align-items: center;
         }
+
 
         .safe-navbar-logo img {
           display: block;
@@ -825,12 +963,14 @@ export default function Navbar() {
           );
         }
 
+
         .safe-navbar-actions {
           display: flex;
           flex: 0 0 auto;
           align-items: center;
           gap: 9px;
         }
+
 
         .safe-theme-button,
         .safe-cart-button,
@@ -842,6 +982,7 @@ export default function Navbar() {
           font-size: 13px;
           font-weight: 700;
         }
+
 
         .safe-theme-button {
           display: grid;
@@ -856,6 +997,7 @@ export default function Navbar() {
           place-items: center;
         }
 
+
         .safe-cart-button {
           position: relative;
           display: grid;
@@ -869,6 +1011,7 @@ export default function Navbar() {
           place-items: center;
           text-decoration: none;
         }
+
 
         .safe-cart-button b {
           position: absolute;
@@ -887,10 +1030,12 @@ export default function Navbar() {
           place-items: center;
         }
 
+
         .safe-profile-wrapper {
           position: relative;
           z-index: 1001;
         }
+
 
         .safe-user-button {
           display: flex;
@@ -902,6 +1047,7 @@ export default function Navbar() {
           color: #fff;
           cursor: pointer;
         }
+
 
         .safe-user-avatar {
           display: grid;
@@ -916,12 +1062,14 @@ export default function Navbar() {
           place-items: center;
         }
 
+
         .safe-user-name {
           max-width: 130px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
+
 
         .safe-login-button {
           padding: 0 19px;
@@ -930,6 +1078,7 @@ export default function Navbar() {
           color: #a81616;
           cursor: pointer;
         }
+
 
         .safe-profile-popup {
           position: absolute;
@@ -946,6 +1095,7 @@ export default function Navbar() {
           pointer-events: auto;
         }
 
+
         .safe-popup-head {
           display: flex;
           align-items: center;
@@ -954,6 +1104,7 @@ export default function Navbar() {
           border-bottom: 1px solid var(--cream-deep);
           background: #fffdf8;
         }
+
 
         .safe-popup-avatar {
           display: grid;
@@ -972,15 +1123,18 @@ export default function Navbar() {
           place-items: center;
         }
 
+
         .safe-popup-head div:last-child {
           display: grid;
           gap: 2px;
         }
 
+
         .safe-popup-head strong {
           font-family: var(--font-display);
           font-size: 17px;
         }
+
 
         .safe-popup-head span {
           color: #938474;
@@ -988,16 +1142,19 @@ export default function Navbar() {
           font-weight: 600;
         }
 
+
         .safe-popup-info {
           display: grid;
           gap: 13px;
           padding: 16px;
         }
 
+
         .safe-popup-info div {
           display: grid;
           gap: 3px;
         }
+
 
         .safe-popup-info span {
           color: #9a8b7c;
@@ -1007,12 +1164,14 @@ export default function Navbar() {
           text-transform: uppercase;
         }
 
+
         .safe-popup-info strong {
           overflow: hidden;
           font-size: 13px;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
+
 
         .safe-logout-button {
           width: calc(100% - 32px);
@@ -1028,6 +1187,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
+
         .safe-modal-root {
           position: fixed;
           inset: 0;
@@ -1037,12 +1197,14 @@ export default function Navbar() {
           place-items: center;
         }
 
+
         .safe-modal-overlay {
           position: absolute;
           inset: 0;
           background: rgba(27, 21, 18, .62);
           backdrop-filter: blur(5px);
         }
+
 
         .safe-modal {
           position: relative;
@@ -1054,6 +1216,7 @@ export default function Navbar() {
           box-shadow: 0 40px 90px -30px rgba(27, 21, 18, .65);
         }
 
+
         .safe-modal-head {
           display: flex;
           align-items: center;
@@ -1064,10 +1227,12 @@ export default function Navbar() {
           background: #fffdf8;
         }
 
+
         .safe-modal-head div {
           display: grid;
           gap: 4px;
         }
+
 
         .safe-modal-head span {
           color: var(--ember);
@@ -1078,6 +1243,7 @@ export default function Navbar() {
           text-transform: uppercase;
         }
 
+
         .safe-modal-head h2 {
           margin: 0;
           color: var(--ink);
@@ -1085,6 +1251,7 @@ export default function Navbar() {
           font-size: 27px;
           font-weight: 600;
         }
+
 
         .safe-modal-close {
           display: grid;
@@ -1099,13 +1266,16 @@ export default function Navbar() {
           place-items: center;
         }
 
+
         .safe-modal-body {
           padding: 24px 26px;
         }
 
+
         .safe-field {
           display: block;
         }
+
 
         .safe-field > span {
           display: block;
@@ -1114,6 +1284,7 @@ export default function Navbar() {
           font-size: 12px;
           font-weight: 700;
         }
+
 
         .safe-field input {
           width: 100%;
@@ -1127,17 +1298,20 @@ export default function Navbar() {
           font-size: 15px;
         }
 
+
         .safe-field input:focus {
           border-color: var(--ember);
           background: #fff;
           box-shadow: 0 0 0 4px rgba(200, 30, 30, .1);
         }
 
+
         .safe-form-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 14px;
         }
+
 
         .safe-phone-info {
           margin: 0 0 18px;
@@ -1149,6 +1323,7 @@ export default function Navbar() {
           font-size: 13px;
         }
 
+
         .safe-navbar-error {
           margin: 14px 0 0;
           padding: 11px 12px;
@@ -1159,6 +1334,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
+
         .safe-modal-foot {
           display: flex;
           justify-content: flex-end;
@@ -1166,6 +1342,7 @@ export default function Navbar() {
           padding: 17px 26px 23px;
           border-top: 1px solid var(--cream-deep);
         }
+
 
         .safe-primary-button,
         .safe-secondary-button {
@@ -1178,6 +1355,7 @@ export default function Navbar() {
           cursor: pointer;
         }
 
+
         .safe-primary-button {
           border: 0;
           background: linear-gradient(
@@ -1188,11 +1366,13 @@ export default function Navbar() {
           color: #fff;
         }
 
+
         .safe-secondary-button {
           border: 1px solid var(--cream-deep);
           background: #fff;
           color: #89796b;
         }
+
 
         body.dark-theme .safe-navbar {
           background: linear-gradient(
@@ -1202,6 +1382,7 @@ export default function Navbar() {
           );
         }
 
+
         body.dark-theme .safe-profile-popup,
         body.dark-theme .safe-modal {
           border-color: #45342b;
@@ -1209,11 +1390,13 @@ export default function Navbar() {
           color: #f8f3ea;
         }
 
+
         body.dark-theme .safe-popup-head,
         body.dark-theme .safe-modal-head {
           border-color: #45342b;
           background: #30221c;
         }
+
 
         body.dark-theme .safe-popup-head strong,
         body.dark-theme .safe-popup-info strong,
@@ -1221,10 +1404,12 @@ export default function Navbar() {
           color: #f8f3ea;
         }
 
+
         body.dark-theme .safe-popup-head span,
         body.dark-theme .safe-popup-info span {
           color: #bba999;
         }
+
 
         body.dark-theme .safe-field input {
           border-color: #584036;
@@ -1232,10 +1417,12 @@ export default function Navbar() {
           color: #f8f3ea;
         }
 
+
         @media screen and (max-width: 700px) {
           .safe-navbar {
             min-height: 62px;
           }
+
 
           .safe-navbar-inner {
             width: calc(100% - 24px);
@@ -1243,23 +1430,28 @@ export default function Navbar() {
             gap: 8px;
           }
 
+
           .safe-navbar-logo img {
             max-width: 110px;
             max-height: 36px;
           }
 
+
           .safe-navbar-actions {
             gap: 6px;
           }
+
 
           .safe-theme-button {
             display: none;
           }
 
+
           .safe-cart-button {
             width: 40px;
             height: 40px;
           }
+
 
           .safe-user-button {
             min-height: 40px;
@@ -1267,14 +1459,17 @@ export default function Navbar() {
             border-radius: 50%;
           }
 
+
           .safe-user-name {
             display: none;
           }
+
 
           .safe-user-avatar {
             width: 30px;
             height: 30px;
           }
+
 
           .safe-login-button {
             min-height: 40px;
@@ -1282,9 +1477,11 @@ export default function Navbar() {
             font-size: 12px;
           }
 
+
           .safe-profile-wrapper {
             position: static;
           }
+
 
           .safe-profile-popup {
             position: fixed;
@@ -1296,10 +1493,12 @@ export default function Navbar() {
             z-index: 1002;
           }
 
+
           .safe-modal-root {
             padding: 0;
             align-items: end;
           }
+
 
           .safe-modal {
             width: 100%;
@@ -1307,11 +1506,13 @@ export default function Navbar() {
             border-radius: 24px 24px 0 0;
           }
 
+
           .safe-modal-body {
             max-height: 62vh;
             overflow-y: auto;
             padding: 20px;
           }
+
 
           .safe-modal-head,
           .safe-modal-foot {
@@ -1319,9 +1520,11 @@ export default function Navbar() {
             padding-left: 20px;
           }
 
+
           .safe-form-grid {
             grid-template-columns: 1fr;
           }
+
 
           .safe-modal-foot .safe-primary-button,
           .safe-modal-foot .safe-secondary-button {
