@@ -69,7 +69,7 @@ function getInitial(user) {
   return (
     lastName.charAt(0).toUpperCase() ||
     firstName.charAt(0).toUpperCase() ||
-    "П"
+    "N"
   );
 }
 
@@ -79,9 +79,7 @@ function getCartCount() {
       localStorage.getItem("cart") || "[]"
     );
 
-    if (!Array.isArray(cart)) {
-      return 0;
-    }
+    if (!Array.isArray(cart)) return 0;
 
     return cart.reduce(
       (sum, item) =>
@@ -160,7 +158,10 @@ export default function Navbar() {
 
     return () => {
       window.removeEventListener("storage", updateCart);
-      window.removeEventListener("cart-updated", updateCart);
+      window.removeEventListener(
+        "cart-updated",
+        updateCart
+      );
       window.removeEventListener(
         "user-updated",
         updateUser
@@ -169,7 +170,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    function closeProfileOutside(event) {
+    function handleOutsideClick(event) {
       if (
         profileRef.current &&
         !profileRef.current.contains(event.target)
@@ -180,13 +181,13 @@ export default function Navbar() {
 
     document.addEventListener(
       "mousedown",
-      closeProfileOutside
+      handleOutsideClick
     );
 
     return () => {
       document.removeEventListener(
         "mousedown",
-        closeProfileOutside
+        handleOutsideClick
       );
     };
   }, []);
@@ -435,7 +436,7 @@ export default function Navbar() {
     if (!form.error) return null;
 
     return (
-      <p className="mobile-navbar-form-error">
+      <p className="safe-navbar-error">
         {form.error}
       </p>
     );
@@ -443,11 +444,14 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="mobile-safe-navbar">
-        <div className="mobile-safe-navbar-inner">
+      <nav
+        className="safe-navbar"
+        aria-label="Главная навигация"
+      >
+        <div className="safe-navbar-inner">
           <NavLink
             to="/"
-            className="mobile-safe-logo"
+            className="safe-navbar-logo"
             aria-label="Главная"
           >
             <img
@@ -456,15 +460,15 @@ export default function Navbar() {
             />
           </NavLink>
 
-          <div className="mobile-safe-actions">
+          <div className="safe-navbar-actions">
             <button
               type="button"
-              className="mobile-theme-button"
+              className="safe-theme-button"
               onClick={toggleTheme}
               aria-label={
                 isDarkTheme
-                  ? "Светлая тема"
-                  : "Тёмная тема"
+                  ? "Включить светлую тему"
+                  : "Включить тёмную тему"
               }
             >
               {isDarkTheme ? "☀" : "◐"}
@@ -472,7 +476,7 @@ export default function Navbar() {
 
             <NavLink
               to="/Basket"
-              className="mobile-cart-button"
+              className="safe-cart-button"
               aria-label="Корзина"
             >
               <span>🛒</span>
@@ -486,29 +490,31 @@ export default function Navbar() {
 
             {user ? (
               <div
-                className="mobile-user-wrapper"
+                className="safe-profile-wrapper"
                 ref={profileRef}
               >
                 <button
                   type="button"
-                  className="mobile-user-button"
+                  className="safe-user-button"
                   onClick={() =>
                     setIsProfileOpen((previous) => !previous)
                   }
+                  aria-expanded={isProfileOpen}
+                  aria-label="Открыть профиль"
                 >
-                  <span className="mobile-user-avatar">
+                  <span className="safe-user-avatar">
                     {getInitial(user)}
                   </span>
 
-                  <span className="mobile-user-name">
+                  <span className="safe-user-name">
                     {getShortName(user)}
                   </span>
                 </button>
 
                 {isProfileOpen && (
-                  <div className="mobile-profile-popup">
-                    <div className="mobile-popup-top">
-                      <div className="mobile-popup-avatar">
+                  <div className="safe-profile-popup">
+                    <div className="safe-popup-head">
+                      <div className="safe-popup-avatar">
                         {getInitial(user)}
                       </div>
 
@@ -521,7 +527,7 @@ export default function Navbar() {
                       </div>
                     </div>
 
-                    <div className="mobile-popup-info">
+                    <div className="safe-popup-info">
                       <div>
                         <span>Имя</span>
                         <strong>
@@ -549,7 +555,7 @@ export default function Navbar() {
 
                     <button
                       type="button"
-                      className="mobile-popup-logout"
+                      className="safe-logout-button"
                       onClick={logout}
                     >
                       Выйти
@@ -560,7 +566,7 @@ export default function Navbar() {
             ) : (
               <button
                 type="button"
-                className="mobile-login-button"
+                className="safe-login-button"
                 onClick={openLoginModal}
               >
                 Войти
@@ -572,18 +578,18 @@ export default function Navbar() {
 
       {isModalOpen && (
         <div
-          className="mobile-login-modal-root"
+          className="safe-modal-root"
           role="dialog"
           aria-modal="true"
           aria-label="Вход"
         >
           <div
-            className="mobile-login-modal-overlay"
+            className="safe-modal-overlay"
             onClick={closeModal}
           />
 
-          <div className="mobile-login-modal">
-            <header className="mobile-login-modal-head">
+          <div className="safe-modal">
+            <header className="safe-modal-head">
               <div>
                 <span>
                   {form.step === "phone" && "Вход"}
@@ -606,10 +612,9 @@ export default function Navbar() {
 
               <button
                 type="button"
+                className="safe-modal-close"
                 onClick={closeModal}
-                className="mobile-login-close"
                 disabled={isLoading}
-                aria-label="Закрыть"
               >
                 ×
               </button>
@@ -617,8 +622,8 @@ export default function Navbar() {
 
             {form.step === "phone" && (
               <form onSubmit={sendCode}>
-                <section className="mobile-login-modal-body">
-                  <label className="mobile-login-field">
+                <section className="safe-modal-body">
+                  <label className="safe-field">
                     <span>Номер телефона</span>
 
                     <input
@@ -639,10 +644,10 @@ export default function Navbar() {
                   {renderError()}
                 </section>
 
-                <footer className="mobile-login-modal-foot">
+                <footer className="safe-modal-foot">
                   <button
                     type="submit"
-                    className="mobile-login-primary"
+                    className="safe-primary-button"
                     disabled={isLoading}
                   >
                     {isLoading
@@ -655,13 +660,13 @@ export default function Navbar() {
 
             {form.step === "code" && (
               <form onSubmit={verifyCode}>
-                <section className="mobile-login-modal-body">
-                  <p className="mobile-login-phone-text">
+                <section className="safe-modal-body">
+                  <p className="safe-phone-info">
                     Код отправлен на{" "}
                     <strong>{form.phone}</strong>
                   </p>
 
-                  <label className="mobile-login-field">
+                  <label className="safe-field">
                     <span>Код из сообщения</span>
 
                     <input
@@ -684,10 +689,10 @@ export default function Navbar() {
                   {renderError()}
                 </section>
 
-                <footer className="mobile-login-modal-foot">
+                <footer className="safe-modal-foot">
                   <button
                     type="button"
-                    className="mobile-login-secondary"
+                    className="safe-secondary-button"
                     onClick={() =>
                       setForm((previous) => ({
                         ...previous,
@@ -703,7 +708,7 @@ export default function Navbar() {
 
                   <button
                     type="submit"
-                    className="mobile-login-primary"
+                    className="safe-primary-button"
                     disabled={isLoading}
                   >
                     {isLoading
@@ -716,9 +721,9 @@ export default function Navbar() {
 
             {form.step === "profile" && (
               <form onSubmit={saveProfile}>
-                <section className="mobile-login-modal-body">
-                  <div className="mobile-login-form-grid">
-                    <label className="mobile-login-field">
+                <section className="safe-modal-body">
+                  <div className="safe-form-grid">
+                    <label className="safe-field">
                       <span>Имя</span>
 
                       <input
@@ -736,7 +741,7 @@ export default function Navbar() {
                       />
                     </label>
 
-                    <label className="mobile-login-field">
+                    <label className="safe-field">
                       <span>Фамилия</span>
 
                       <input
@@ -758,10 +763,10 @@ export default function Navbar() {
                   {renderError()}
                 </section>
 
-                <footer className="mobile-login-modal-foot">
+                <footer className="safe-modal-foot">
                   <button
                     type="submit"
-                    className="mobile-login-primary"
+                    className="safe-primary-button"
                   >
                     Сохранить
                   </button>
@@ -773,10 +778,18 @@ export default function Navbar() {
       )}
 
       <style>{`
-        .mobile-safe-navbar {
+        html,
+        body,
+        #root {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        .safe-navbar {
           position: sticky;
           top: 0;
-          z-index: 100;
+          z-index: 500;
+          width: 100%;
           min-height: 70px;
           background: linear-gradient(
             180deg,
@@ -786,23 +799,24 @@ export default function Navbar() {
           box-shadow: 0 8px 24px -12px rgba(200, 30, 30, .55);
         }
 
-        .mobile-safe-navbar-inner {
+        .safe-navbar-inner {
           display: flex;
           align-items: center;
           justify-content: space-between;
           width: min(1200px, calc(100% - 36px));
           min-height: 70px;
           margin: 0 auto;
-          gap: 15px;
+          gap: 12px;
         }
 
-        .mobile-safe-logo {
+        .safe-navbar-logo {
           display: flex;
-          flex: 0 0 auto;
+          flex: 0 1 auto;
+          min-width: 0;
           align-items: center;
         }
 
-        .mobile-safe-logo img {
+        .safe-navbar-logo img {
           display: block;
           max-width: 145px;
           max-height: 43px;
@@ -811,16 +825,17 @@ export default function Navbar() {
           );
         }
 
-        .mobile-safe-actions {
+        .safe-navbar-actions {
           display: flex;
+          flex: 0 0 auto;
           align-items: center;
           gap: 9px;
         }
 
-        .mobile-theme-button,
-        .mobile-cart-button,
-        .mobile-user-button,
-        .mobile-login-button {
+        .safe-theme-button,
+        .safe-cart-button,
+        .safe-user-button,
+        .safe-login-button {
           min-height: 42px;
           border-radius: 999px;
           font-family: var(--font-body);
@@ -828,7 +843,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
-        .mobile-theme-button {
+        .safe-theme-button {
           display: grid;
           width: 42px;
           padding: 0;
@@ -841,7 +856,7 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .mobile-cart-button {
+        .safe-cart-button {
           position: relative;
           display: grid;
           width: 42px;
@@ -855,7 +870,7 @@ export default function Navbar() {
           text-decoration: none;
         }
 
-        .mobile-cart-button b {
+        .safe-cart-button b {
           position: absolute;
           top: -8px;
           right: -8px;
@@ -872,11 +887,12 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .mobile-user-wrapper {
+        .safe-profile-wrapper {
           position: relative;
+          z-index: 1001;
         }
 
-        .mobile-user-button {
+        .safe-user-button {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -887,7 +903,7 @@ export default function Navbar() {
           cursor: pointer;
         }
 
-        .mobile-user-avatar {
+        .safe-user-avatar {
           display: grid;
           width: 32px;
           height: 32px;
@@ -900,14 +916,14 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .mobile-user-name {
+        .safe-user-name {
           max-width: 130px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .mobile-login-button {
+        .safe-login-button {
           padding: 0 19px;
           border: 0;
           background: #fff;
@@ -915,10 +931,11 @@ export default function Navbar() {
           cursor: pointer;
         }
 
-        .mobile-profile-popup {
+        .safe-profile-popup {
           position: absolute;
           top: calc(100% + 12px);
           right: 0;
+          z-index: 1002;
           width: 285px;
           overflow: hidden;
           border: 1px solid var(--cream-deep);
@@ -926,22 +943,10 @@ export default function Navbar() {
           background: #fff;
           box-shadow: 0 22px 48px -20px rgba(27, 21, 18, .48);
           color: var(--ink);
-          animation: mobile-popup-show .2s var(--ease-out);
+          pointer-events: auto;
         }
 
-        @keyframes mobile-popup-show {
-          from {
-            opacity: 0;
-            transform: translateY(-7px) scale(.98);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        .mobile-popup-top {
+        .safe-popup-head {
           display: flex;
           align-items: center;
           gap: 11px;
@@ -950,7 +955,7 @@ export default function Navbar() {
           background: #fffdf8;
         }
 
-        .mobile-popup-avatar {
+        .safe-popup-avatar {
           display: grid;
           width: 42px;
           height: 42px;
@@ -967,34 +972,34 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .mobile-popup-top div:last-child {
+        .safe-popup-head div:last-child {
           display: grid;
           gap: 2px;
         }
 
-        .mobile-popup-top strong {
+        .safe-popup-head strong {
           font-family: var(--font-display);
           font-size: 17px;
         }
 
-        .mobile-popup-top span {
+        .safe-popup-head span {
           color: #938474;
           font-size: 11px;
           font-weight: 600;
         }
 
-        .mobile-popup-info {
+        .safe-popup-info {
           display: grid;
           gap: 13px;
           padding: 16px;
         }
 
-        .mobile-popup-info div {
+        .safe-popup-info div {
           display: grid;
           gap: 3px;
         }
 
-        .mobile-popup-info span {
+        .safe-popup-info span {
           color: #9a8b7c;
           font-size: 10px;
           font-weight: 800;
@@ -1002,14 +1007,14 @@ export default function Navbar() {
           text-transform: uppercase;
         }
 
-        .mobile-popup-info strong {
+        .safe-popup-info strong {
           overflow: hidden;
           font-size: 13px;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .mobile-popup-logout {
+        .safe-logout-button {
           width: calc(100% - 32px);
           min-height: 42px;
           margin: 0 16px 16px;
@@ -1023,23 +1028,23 @@ export default function Navbar() {
           font-weight: 700;
         }
 
-        .mobile-login-modal-root {
+        .safe-modal-root {
           position: fixed;
           inset: 0;
-          z-index: 999;
+          z-index: 2000;
           display: grid;
           padding: 20px;
           place-items: center;
         }
 
-        .mobile-login-modal-overlay {
+        .safe-modal-overlay {
           position: absolute;
           inset: 0;
           background: rgba(27, 21, 18, .62);
           backdrop-filter: blur(5px);
         }
 
-        .mobile-login-modal {
+        .safe-modal {
           position: relative;
           width: min(520px, 100%);
           overflow: hidden;
@@ -1049,7 +1054,7 @@ export default function Navbar() {
           box-shadow: 0 40px 90px -30px rgba(27, 21, 18, .65);
         }
 
-        .mobile-login-modal-head {
+        .safe-modal-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1059,12 +1064,12 @@ export default function Navbar() {
           background: #fffdf8;
         }
 
-        .mobile-login-modal-head div {
+        .safe-modal-head div {
           display: grid;
           gap: 4px;
         }
 
-        .mobile-login-modal-head span {
+        .safe-modal-head span {
           color: var(--ember);
           font-family: var(--font-mono);
           font-size: 10px;
@@ -1073,7 +1078,7 @@ export default function Navbar() {
           text-transform: uppercase;
         }
 
-        .mobile-login-modal-head h2 {
+        .safe-modal-head h2 {
           margin: 0;
           color: var(--ink);
           font-family: var(--font-display);
@@ -1081,7 +1086,7 @@ export default function Navbar() {
           font-weight: 600;
         }
 
-        .mobile-login-close {
+        .safe-modal-close {
           display: grid;
           width: 36px;
           height: 36px;
@@ -1094,15 +1099,15 @@ export default function Navbar() {
           place-items: center;
         }
 
-        .mobile-login-modal-body {
+        .safe-modal-body {
           padding: 24px 26px;
         }
 
-        .mobile-login-field {
+        .safe-field {
           display: block;
         }
 
-        .mobile-login-field > span {
+        .safe-field > span {
           display: block;
           margin-bottom: 8px;
           color: #6d5f52;
@@ -1110,7 +1115,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
-        .mobile-login-field input {
+        .safe-field input {
           width: 100%;
           height: 48px;
           padding: 0 14px;
@@ -1122,19 +1127,19 @@ export default function Navbar() {
           font-size: 15px;
         }
 
-        .mobile-login-field input:focus {
+        .safe-field input:focus {
           border-color: var(--ember);
           background: #fff;
           box-shadow: 0 0 0 4px rgba(200, 30, 30, .1);
         }
 
-        .mobile-login-form-grid {
+        .safe-form-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 14px;
         }
 
-        .mobile-login-phone-text {
+        .safe-phone-info {
           margin: 0 0 18px;
           padding: 12px 14px;
           border-left: 3px solid var(--ember);
@@ -1144,7 +1149,7 @@ export default function Navbar() {
           font-size: 13px;
         }
 
-        .mobile-navbar-form-error {
+        .safe-navbar-error {
           margin: 14px 0 0;
           padding: 11px 12px;
           border-radius: 10px;
@@ -1154,7 +1159,7 @@ export default function Navbar() {
           font-weight: 700;
         }
 
-        .mobile-login-modal-foot {
+        .safe-modal-foot {
           display: flex;
           justify-content: flex-end;
           gap: 10px;
@@ -1162,8 +1167,8 @@ export default function Navbar() {
           border-top: 1px solid var(--cream-deep);
         }
 
-        .mobile-login-primary,
-        .mobile-login-secondary {
+        .safe-primary-button,
+        .safe-secondary-button {
           min-height: 46px;
           border-radius: 999px;
           padding: 0 22px;
@@ -1173,7 +1178,7 @@ export default function Navbar() {
           cursor: pointer;
         }
 
-        .mobile-login-primary {
+        .safe-primary-button {
           border: 0;
           background: linear-gradient(
             135deg,
@@ -1183,13 +1188,13 @@ export default function Navbar() {
           color: #fff;
         }
 
-        .mobile-login-secondary {
+        .safe-secondary-button {
           border: 1px solid var(--cream-deep);
           background: #fff;
           color: #89796b;
         }
 
-        body.dark-theme .mobile-safe-navbar {
+        body.dark-theme .safe-navbar {
           background: linear-gradient(
             180deg,
             #431c18 0%,
@@ -1197,142 +1202,130 @@ export default function Navbar() {
           );
         }
 
-        body.dark-theme .mobile-profile-popup,
-        body.dark-theme .mobile-login-modal {
+        body.dark-theme .safe-profile-popup,
+        body.dark-theme .safe-modal {
           border-color: #45342b;
           background: #251b17;
           color: #f8f3ea;
         }
 
-        body.dark-theme .mobile-popup-top,
-        body.dark-theme .mobile-login-modal-head {
+        body.dark-theme .safe-popup-head,
+        body.dark-theme .safe-modal-head {
           border-color: #45342b;
           background: #30221c;
         }
 
-        body.dark-theme .mobile-popup-top strong,
-        body.dark-theme .mobile-popup-info strong,
-        body.dark-theme .mobile-login-modal-head h2 {
+        body.dark-theme .safe-popup-head strong,
+        body.dark-theme .safe-popup-info strong,
+        body.dark-theme .safe-modal-head h2 {
           color: #f8f3ea;
         }
 
-        body.dark-theme .mobile-popup-top span,
-        body.dark-theme .mobile-popup-info span {
+        body.dark-theme .safe-popup-head span,
+        body.dark-theme .safe-popup-info span {
           color: #bba999;
         }
 
-        body.dark-theme .mobile-login-field input {
+        body.dark-theme .safe-field input {
           border-color: #584036;
           background: #342620;
           color: #f8f3ea;
         }
 
         @media screen and (max-width: 700px) {
-          .mobile-safe-navbar {
+          .safe-navbar {
             min-height: 62px;
           }
 
-          .mobile-safe-navbar-inner {
+          .safe-navbar-inner {
             width: calc(100% - 24px);
             min-height: 62px;
             gap: 8px;
           }
 
-          .mobile-safe-logo img {
+          .safe-navbar-logo img {
             max-width: 110px;
             max-height: 36px;
           }
 
-          .mobile-safe-actions {
+          .safe-navbar-actions {
             gap: 6px;
           }
 
-          .mobile-theme-button {
+          .safe-theme-button {
             display: none;
           }
 
-          .mobile-cart-button {
+          .safe-cart-button {
             width: 40px;
             height: 40px;
           }
 
-          .mobile-user-button {
+          .safe-user-button {
             min-height: 40px;
-            padding: 0 9px 0 4px;
+            padding: 0 5px;
+            border-radius: 50%;
           }
 
-          .mobile-user-avatar {
+          .safe-user-name {
+            display: none;
+          }
+
+          .safe-user-avatar {
             width: 30px;
             height: 30px;
           }
 
-          .mobile-user-name {
-            max-width: 105px;
-            font-size: 12px;
-          }
-
-          .mobile-login-button {
+          .safe-login-button {
             min-height: 40px;
             padding: 0 15px;
             font-size: 12px;
           }
 
-          .mobile-profile-popup {
+          .safe-profile-wrapper {
+            position: static;
+          }
+
+          .safe-profile-popup {
             position: fixed;
             right: 12px;
-            bottom: 82px;
+            bottom: 78px;
             left: 12px;
             top: auto;
             width: auto;
+            z-index: 1002;
           }
 
-          .mobile-login-modal-root {
+          .safe-modal-root {
             padding: 0;
             align-items: end;
           }
 
-          .mobile-login-modal {
+          .safe-modal {
             width: 100%;
             max-height: 92vh;
             border-radius: 24px 24px 0 0;
           }
 
-          .mobile-login-modal-body {
+          .safe-modal-body {
             max-height: 62vh;
             overflow-y: auto;
             padding: 20px;
           }
 
-          .mobile-login-modal-head,
-          .mobile-login-modal-foot {
+          .safe-modal-head,
+          .safe-modal-foot {
             padding-right: 20px;
             padding-left: 20px;
           }
 
-          .mobile-login-form-grid {
+          .safe-form-grid {
             grid-template-columns: 1fr;
           }
 
-          .mobile-login-modal-foot .mobile-login-primary,
-          .mobile-login-modal-foot .mobile-login-secondary {
+          .safe-modal-foot .safe-primary-button,
+          .safe-modal-foot .safe-secondary-button {
             flex: 1;
-          }
-        }
-
-        @media screen and (max-width: 390px) {
-          .mobile-safe-logo img {
-            max-width: 88px;
-          }
-
-          .mobile-user-name {
-            display: none;
-          }
-
-          .mobile-user-button {
-            width: 40px;
-            padding: 4px;
-            border-radius: 50%;
-            justify-content: center;
           }
         }
       `}</style>
