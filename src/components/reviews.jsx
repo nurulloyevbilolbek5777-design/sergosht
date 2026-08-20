@@ -82,7 +82,11 @@ function getReviewName(review) {
       "",
   });
 
-  return directName || "Пользователь";
+  if (directName) {
+    return directName;
+  }
+
+  return getFullName(getUser()) || "Пользователь";
 }
 
 function getReviewText(review) {
@@ -225,6 +229,28 @@ export default function Reviews() {
     if (savedUser?.token) {
       checkOrders(savedUser);
     }
+
+    function updateUser() {
+      const freshUser = getUser();
+
+      setUser(freshUser);
+
+      if (freshUser?.token) {
+        checkOrders(freshUser);
+      }
+    }
+
+    window.addEventListener("user-updated", updateUser);
+    window.addEventListener("storage", updateUser);
+
+    return () => {
+      window.removeEventListener(
+        "user-updated",
+        updateUser
+      );
+
+      window.removeEventListener("storage", updateUser);
+    };
   }, []);
 
   useEffect(() => {
@@ -569,7 +595,7 @@ export default function Reviews() {
                     </div>
 
                     <div className="rv-person">
-                      <h2>{name} оставил отзыв</h2>
+                      <h2>{name}</h2>
 
                       {date && <time>{date}</time>}
                     </div>
@@ -655,7 +681,7 @@ export default function Reviews() {
 
             <div className="rv-modal-body">
               <p className="rv-author">
-                {getFullName(user)} оставит отзыв
+                {getFullName(user)}
               </p>
 
               {CATEGORIES.map((category) => (
